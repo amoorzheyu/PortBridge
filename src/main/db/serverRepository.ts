@@ -128,6 +128,11 @@ export class ServerRepository {
   }
 
   delete(id: string): void {
-    getDatabase().prepare('DELETE FROM servers WHERE id = ?').run(id);
+    const db = getDatabase();
+    const transaction = db.transaction(() => {
+      db.prepare('DELETE FROM tunnels WHERE server_id = ?').run(id);
+      db.prepare('DELETE FROM servers WHERE id = ?').run(id);
+    });
+    transaction();
   }
 }

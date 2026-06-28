@@ -1,7 +1,9 @@
 import { app, BrowserWindow } from 'electron';
 import { join } from 'node:path';
+import { createAppServices, registerIpcHandlers } from './ipc';
 
 let mainWindow: BrowserWindow | null = null;
+const services = createAppServices();
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
@@ -27,6 +29,7 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
+  registerIpcHandlers(services);
   createWindow();
 
   app.on('activate', () => {
@@ -36,4 +39,10 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
+});
+
+app.on('before-quit', async (event) => {
+  event.preventDefault();
+  await services.tunnelManager.stopAll();
+  app.exit(0);
 });

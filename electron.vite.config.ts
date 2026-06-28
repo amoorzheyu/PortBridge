@@ -21,11 +21,6 @@ export default defineConfig({
   },
   renderer: {
     plugins: [react()],
-    build: {
-      rollupOptions: {
-        input: resolve(__dirname, 'index.html')
-      }
-    },
     resolve: {
       alias: {
         '@': resolve(__dirname, 'src/renderer'),

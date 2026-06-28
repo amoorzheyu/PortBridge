@@ -12,7 +12,15 @@ export const listByServerSchema = z.object({
   serverId: z.string().min(1)
 });
 
-export const portSchema = z.number().int().min(1, '端口必须是 1-65535').max(65535, '端口必须是 1-65535');
+export const portSchema = z.preprocess((value) => {
+  if (value === '') return undefined;
+  if (typeof value === 'string') return Number(value);
+  return value;
+}, z
+  .number({ required_error: '端口必须是 1-65535', invalid_type_error: '端口必须是 1-65535' })
+  .int('端口必须是 1-65535')
+  .min(1, '端口必须是 1-65535')
+  .max(65535, '端口必须是 1-65535'));
 
 export const createGroupSchema = z.object({
   name: z.string().trim().min(1, '名称不能为空')

@@ -34,6 +34,10 @@ export function TunnelForm({ serverId, tunnel, onSubmit, onCancel }: TunnelFormP
   const checkPort = async () => {
     const localHost = form.getValues('localHost');
     const localPort = form.getValues('localPort');
+    if (!localPort) {
+      toast.error('端口必须是 1-65535');
+      return;
+    }
     const available = await electronApi.runtime.checkPort(localHost, localPort);
     if (available) toast.success('端口可用');
     else toast.error(`本地端口 ${localHost}:${localPort} 已被占用`);
@@ -76,7 +80,11 @@ export function TunnelForm({ serverId, tunnel, onSubmit, onCancel }: TunnelFormP
               <FormItem>
                 <FormLabel>本地端口</FormLabel>
                 <FormControl>
-                  <Input type="number" {...field} onChange={(event) => field.onChange(Number(event.target.value))} />
+                  <Input
+                    type="number"
+                    value={field.value ?? ''}
+                    onChange={(event) => field.onChange(event.target.value === '' ? undefined : Number(event.target.value))}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -104,7 +112,11 @@ export function TunnelForm({ serverId, tunnel, onSubmit, onCancel }: TunnelFormP
               <FormItem>
                 <FormLabel>远程端口</FormLabel>
                 <FormControl>
-                  <Input type="number" {...field} onChange={(event) => field.onChange(Number(event.target.value))} />
+                  <Input
+                    type="number"
+                    value={field.value ?? ''}
+                    onChange={(event) => field.onChange(event.target.value === '' ? undefined : Number(event.target.value))}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

@@ -115,7 +115,11 @@ export function ServerForm({ groups, server, defaultGroupId, onSubmit, onCancel 
               <FormItem>
                 <FormLabel>SSH 端口</FormLabel>
                 <FormControl>
-                  <Input type="number" {...field} onChange={(event) => field.onChange(Number(event.target.value))} />
+                  <Input
+                    type="number"
+                    value={field.value ?? ''}
+                    onChange={(event) => field.onChange(event.target.value === '' ? undefined : Number(event.target.value))}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

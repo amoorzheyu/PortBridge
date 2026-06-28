@@ -1,11 +1,49 @@
 import { dialog } from 'electron';
+import fs from 'node:fs';
 import { readFile } from 'node:fs/promises';
+import { Client, type ConnectConfig } from 'ssh2';
 import { z } from 'zod';
-import { checkPortSchema, idSchema, listByServerSchema } from '../../shared/schemas';
+import { checkPortSchema, createServerSchema, idSchema, listByServerSchema, type CreateServerInput } from '../../shared/schemas';
 import { checkPortAvailable } from '../utils/checkPort';
 import type { LogService } from '../services/LogService';
 import type { TunnelManager } from '../services/TunnelManager';
 import { registerHandler } from './safeHandler';
+
+function testSshConnection(input: CreateServerInput): Promise<boolean> {
+  const ssh = new Client();
+  const config: ConnectConfig = {
+    host: input.host,
+    port: input.port,
+    username: input.username,
+    readyTimeout: 15000,
+    keepaliveInterval: 30000,
+    keepaliveCountMax: 3
+  };
+
+  if (input.authType === 'password') {
+    config.password = input.password;
+  } else if (input.privateKey?.trim()) {
+    config.privateKey = input.privateKey;
+    config.passphrase = input.privateKeyPassphrase || undefined;
+  } else if (input.privateKeyPath && fs.existsSync(input.privateKeyPath)) {
+    config.privateKey = fs.readFileSync(input.privateKeyPath, 'utf8');
+    config.passphrase = input.privateKeyPassphrase || undefined;
+  } else {
+    throw new Error('私钥文件不存在');
+  }
+
+  return new Promise((resolve, reject) => {
+    ssh.once('ready', () => {
+      ssh.end();
+      resolve(true);
+    });
+    ssh.once('error', (error) => {
+      ssh.end();
+      reject(error);
+    });
+    ssh.connect(config);
+  });
+}
 
 export function registerRuntimeHandlers(tunnelManager: TunnelManager, logService: LogService): void {
   registerHandler('runtime:startTunnel', idSchema, (input: z.infer<typeof idSchema>) => tunnelManager.startTunnel(input.id));
@@ -15,6 +53,7 @@ export function registerRuntimeHandlers(tunnelManager: TunnelManager, logService
   registerHandler('runtime:stopServerTunnels', listByServerSchema, (input) => tunnelManager.stopServerTunnels(input.serverId));
   registerHandler('runtime:getStates', null, () => tunnelManager.getTunnelStates());
   registerHandler('runtime:checkPort', checkPortSchema, (input) => checkPortAvailable(input.host, input.port));
+  registerHandler('runtime:testServerConnection', createServerSchema, (input) => testSshConnection(input));
   registerHandler('logs:list', null, () => logService.list());
   registerHandler('logs:clear', null, () => {
     logService.clear();

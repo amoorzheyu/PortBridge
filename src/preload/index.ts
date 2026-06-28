@@ -46,7 +46,8 @@ const api = {
     startServerTunnels: (serverId: string) => invoke<void>('runtime:startServerTunnels', { serverId }),
     stopServerTunnels: (serverId: string) => invoke<void>('runtime:stopServerTunnels', { serverId }),
     getStates: () => invoke<TunnelRuntimeState[]>('runtime:getStates'),
-    checkPort: (host: string, port: number) => invoke<boolean>('runtime:checkPort', { host, port })
+    checkPort: (host: string, port: number) => invoke<boolean>('runtime:checkPort', { host, port }),
+    testServerConnection: (input: CreateServerInput) => invoke<boolean>('runtime:testServerConnection', input)
   },
   logs: {
     list: () => invoke<AppLog[]>('logs:list'),

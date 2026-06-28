@@ -1,6 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Upload } from 'lucide-react';
+import { ChevronDown, ChevronRight, Upload } from 'lucide-react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import type { Group, ServerConfig } from '@shared/types';
 import { createServerSchema, type CreateServerInput } from '@shared/schemas';
 import { Button } from '@/components/ui/button';
@@ -20,6 +22,8 @@ interface ServerFormProps {
 }
 
 export function ServerForm({ groups, server, defaultGroupId, onSubmit, onCancel }: ServerFormProps) {
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [testing, setTesting] = useState(false);
   const form = useForm<CreateServerInput>({
     resolver: zodResolver(createServerSchema),
     defaultValues: {
@@ -49,6 +53,21 @@ export function ServerForm({ groups, server, defaultGroupId, onSubmit, onCancel 
     if (!file) return;
     form.setValue('privateKey', file.content, { shouldDirty: true, shouldValidate: true });
     form.setValue('privateKeyPath', file.path, { shouldDirty: true });
+  };
+
+  const testConnection = async () => {
+    const valid = await form.trigger();
+    if (!valid) return;
+
+    setTesting(true);
+    try {
+      await electronApi.runtime.testServerConnection(form.getValues());
+      toast.success('连接成功');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '连接失败');
+    } finally {
+      setTesting(false);
+    }
   };
 
   return (
@@ -212,43 +231,48 @@ export function ServerForm({ groups, server, defaultGroupId, onSubmit, onCancel 
                 </FormItem>
               )}
             />
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="privateKeyPath"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>私钥文件</FormLabel>
-                    <FormControl>
-                      <Input placeholder="可选" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="privateKeyPassphrase"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>私钥口令</FormLabel>
-                    <FormControl>
-                      <Input type="password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <div className="rounded-md border">
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-9 w-full justify-start rounded-md px-3"
+                onClick={() => setAdvancedOpen((value) => !value)}
+              >
+                {advancedOpen ? <ChevronDown className="mr-2 h-4 w-4" /> : <ChevronRight className="mr-2 h-4 w-4" />}
+                高级选项
+              </Button>
+              {advancedOpen ? (
+                <div className="border-t p-3">
+                  <FormField
+                    control={form.control}
+                    name="privateKeyPassphrase"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>私钥口令</FormLabel>
+                        <FormControl>
+                          <Input type="password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              ) : null}
             </div>
           </div>
         )}
 
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={onCancel}>
-            取消
+        <div className="flex items-center justify-between gap-2">
+          <Button type="button" variant="secondary" onClick={testConnection} disabled={testing}>
+            {testing ? '测试中' : '测试连接'}
           </Button>
-          <Button type="submit">保存</Button>
-        </DialogFooter>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onCancel}>
+              取消
+            </Button>
+            <Button type="submit">保存</Button>
+          </DialogFooter>
+        </div>
       </form>
     </Form>
   );

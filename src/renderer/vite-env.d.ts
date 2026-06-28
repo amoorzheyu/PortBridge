@@ -42,6 +42,7 @@ declare global {
         stopServerTunnels: (serverId: string) => Promise<void>;
         getStates: () => Promise<TunnelRuntimeState[]>;
         checkPort: (host: string, port: number) => Promise<boolean>;
+        testServerConnection: (input: CreateServerInput) => Promise<boolean>;
       };
       logs: {
         list: () => Promise<AppLog[]>;

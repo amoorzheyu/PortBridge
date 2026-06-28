@@ -1,0 +1,133 @@
+import type { ServerConfig } from '../../shared/types';
+import type { CreateServerInput, UpdateServerInput } from '../../shared/schemas';
+import { getDatabase } from './database';
+import { createId, nowIso } from '../utils/id';
+
+interface ServerRow {
+  id: string;
+  group_id: string;
+  name: string;
+  host: string;
+  port: number;
+  username: string;
+  auth_type: 'password' | 'privateKey';
+  password?: string;
+  private_key_path?: string;
+  private_key_passphrase?: string;
+  auto_reconnect: number;
+  reconnect_interval: number;
+  created_at: string;
+  updated_at: string;
+}
+
+function mapServer(row: ServerRow): ServerConfig {
+  return {
+    id: row.id,
+    groupId: row.group_id,
+    name: row.name,
+    host: row.host,
+    port: row.port,
+    username: row.username,
+    authType: row.auth_type,
+    password: row.password ?? undefined,
+    privateKeyPath: row.private_key_path ?? undefined,
+    privateKeyPassphrase: row.private_key_passphrase ?? undefined,
+    autoReconnect: Boolean(row.auto_reconnect),
+    reconnectInterval: row.reconnect_interval,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function publicServer(server: ServerConfig): ServerConfig {
+  return {
+    ...server,
+    password: server.password ? undefined : server.password,
+    privateKeyPassphrase: server.privateKeyPassphrase ? undefined : server.privateKeyPassphrase
+  };
+}
+
+export class ServerRepository {
+  list(): ServerConfig[] {
+    return getDatabase()
+      .prepare('SELECT * FROM servers ORDER BY created_at ASC')
+      .all()
+      .map((row) => publicServer(mapServer(row as ServerRow)));
+  }
+
+  listByGroup(groupId: string): ServerConfig[] {
+    return getDatabase()
+      .prepare('SELECT * FROM servers WHERE group_id = ? ORDER BY created_at ASC')
+      .all(groupId)
+      .map((row) => publicServer(mapServer(row as ServerRow)));
+  }
+
+  get(id: string, includeSecrets = false): ServerConfig | undefined {
+    const row = getDatabase().prepare('SELECT * FROM servers WHERE id = ?').get(id) as ServerRow | undefined;
+    if (!row) return undefined;
+    const server = mapServer(row);
+    return includeSecrets ? server : publicServer(server);
+  }
+
+  create(input: CreateServerInput): ServerConfig {
+    const createdAt = nowIso();
+    const id = createId();
+    getDatabase()
+      .prepare(
+        `INSERT INTO servers (
+          id, group_id, name, host, port, username, auth_type, password, private_key_path,
+          private_key_passphrase, auto_reconnect, reconnect_interval, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(
+        id,
+        input.groupId,
+        input.name,
+        input.host,
+        input.port,
+        input.username,
+        input.authType,
+        input.authType === 'password' ? input.password : null,
+        input.authType === 'privateKey' ? input.privateKeyPath : null,
+        input.authType === 'privateKey' ? input.privateKeyPassphrase : null,
+        input.autoReconnect ? 1 : 0,
+        input.reconnectInterval,
+        createdAt,
+        createdAt
+      );
+    return this.get(id) as ServerConfig;
+  }
+
+  update(input: UpdateServerInput): ServerConfig {
+    const updatedAt = nowIso();
+    getDatabase()
+      .prepare(
+        `UPDATE servers SET
+          group_id = ?, name = ?, host = ?, port = ?, username = ?, auth_type = ?, password = ?,
+          private_key_path = ?, private_key_passphrase = ?, auto_reconnect = ?, reconnect_interval = ?, updated_at = ?
+        WHERE id = ?`
+      )
+      .run(
+        input.groupId,
+        input.name,
+        input.host,
+        input.port,
+        input.username,
+        input.authType,
+        input.authType === 'password' ? input.password : null,
+        input.authType === 'privateKey' ? input.privateKeyPath : null,
+        input.authType === 'privateKey' ? input.privateKeyPassphrase : null,
+        input.autoReconnect ? 1 : 0,
+        input.reconnectInterval,
+        updatedAt,
+        input.id
+      );
+    const server = this.get(input.id);
+    if (!server) throw new Error('服务器不存在');
+    return server;
+  }
+
+  delete(id: string): void {
+    getDatabase().prepare('DELETE FROM servers WHERE id = ?').run(id);
+  }
+}

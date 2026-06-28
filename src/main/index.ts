@@ -31,6 +31,7 @@ function createWindow(): void {
 app.whenReady().then(() => {
   registerIpcHandlers(services);
   createWindow();
+  void services.tunnelManager.startAutoStartTunnels();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -41,7 +42,11 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
 
+let isQuitting = false;
+
 app.on('before-quit', async (event) => {
+  if (isQuitting) return;
+  isQuitting = true;
   event.preventDefault();
   await services.tunnelManager.stopAll();
   app.exit(0);

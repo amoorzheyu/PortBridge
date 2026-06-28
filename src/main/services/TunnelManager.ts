@@ -182,6 +182,17 @@ export class TunnelManager {
     }
   }
 
+  async startAutoStartTunnels(): Promise<void> {
+    const tunnels = this.tunnelRepository.listAutoStart();
+    for (const tunnel of tunnels) {
+      try {
+        await this.startTunnel(tunnel.id);
+      } catch {
+        // startTunnel already updates state and writes a user-facing log.
+      }
+    }
+  }
+
   hasRunningServerTunnels(serverId: string): boolean {
     return Array.from(this.runtimes.values()).some((runtime) => {
       return runtime.serverId === serverId && ['starting', 'running', 'stopping', 'reconnecting'].includes(runtime.status);

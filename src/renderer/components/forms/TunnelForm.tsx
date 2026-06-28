@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import type { TunnelRule } from '@shared/types';
 import { createTunnelSchema, type CreateTunnelInput } from '@shared/schemas';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,7 @@ import { DialogFooter } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { electronApi } from '@/api/electronApi';
 
 interface TunnelFormProps {
   serverId: string;
@@ -28,6 +30,14 @@ export function TunnelForm({ serverId, tunnel, onSubmit, onCancel }: TunnelFormP
       autoStart: tunnel?.autoStart ?? false
     }
   });
+
+  const checkPort = async () => {
+    const localHost = form.getValues('localHost');
+    const localPort = form.getValues('localPort');
+    const available = await electronApi.runtime.checkPort(localHost, localPort);
+    if (available) toast.success('端口可用');
+    else toast.error(`本地端口 ${localHost}:${localPort} 已被占用`);
+  };
 
   return (
     <Form {...form}>
@@ -114,6 +124,9 @@ export function TunnelForm({ serverId, tunnel, onSubmit, onCancel }: TunnelFormP
           )}
         />
         <DialogFooter>
+          <Button type="button" variant="secondary" onClick={checkPort}>
+            检测端口
+          </Button>
           <Button type="button" variant="outline" onClick={onCancel}>
             取消
           </Button>

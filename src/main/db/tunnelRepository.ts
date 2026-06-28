@@ -46,6 +46,13 @@ export class TunnelRepository {
       .map((row) => mapTunnel(row as TunnelRow));
   }
 
+  listAutoStart(): TunnelRule[] {
+    return getDatabase()
+      .prepare('SELECT * FROM tunnels WHERE auto_start = 1 ORDER BY created_at ASC')
+      .all()
+      .map((row) => mapTunnel(row as TunnelRow));
+  }
+
   get(id: string): TunnelRule | undefined {
     const row = getDatabase().prepare('SELECT * FROM tunnels WHERE id = ?').get(id) as TunnelRow | undefined;
     return row ? mapTunnel(row) : undefined;

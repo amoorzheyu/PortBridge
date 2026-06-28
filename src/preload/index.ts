@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
 import type { AppLog, Group, ServerConfig, TunnelRule, TunnelRuntimeState } from '../shared/types';
 import type {
   CreateGroupInput,
@@ -54,12 +54,12 @@ const api = {
   },
   events: {
     onStateChanged: (callback: (state: TunnelRuntimeState) => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, state: TunnelRuntimeState) => callback(state);
+      const listener = (_event: IpcRendererEvent, state: TunnelRuntimeState) => callback(state);
       ipcRenderer.on('runtime:stateChanged', listener);
       return () => ipcRenderer.off('runtime:stateChanged', listener);
     },
     onLog: (callback: (log: AppLog) => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, log: AppLog) => callback(log);
+      const listener = (_event: IpcRendererEvent, log: AppLog) => callback(log);
       ipcRenderer.on('runtime:log', listener);
       return () => ipcRenderer.off('runtime:log', listener);
     },

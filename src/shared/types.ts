@@ -17,6 +17,7 @@ export interface ServerConfig {
   username: string;
   authType: AuthType;
   password?: string;
+  privateKey?: string;
   privateKeyPath?: string;
   privateKeyPassphrase?: string;
   autoReconnect: boolean;

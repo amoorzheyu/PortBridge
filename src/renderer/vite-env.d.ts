@@ -47,6 +47,9 @@ declare global {
         list: () => Promise<AppLog[]>;
         clear: () => Promise<boolean>;
       };
+      files: {
+        selectPrivateKey: () => Promise<{ path: string; content: string } | null>;
+      };
       events: {
         onStateChanged: (callback: (state: TunnelRuntimeState) => void) => () => void;
         onLog: (callback: (log: AppLog) => void) => () => void;

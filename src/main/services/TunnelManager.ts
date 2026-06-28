@@ -232,10 +232,13 @@ export class TunnelManager {
     if (server.authType === 'password') {
       config.password = server.password;
     } else {
-      if (!server.privateKeyPath || !fs.existsSync(server.privateKeyPath)) {
+      if (server.privateKey?.trim()) {
+        config.privateKey = server.privateKey;
+      } else if (server.privateKeyPath && fs.existsSync(server.privateKeyPath)) {
+        config.privateKey = fs.readFileSync(server.privateKeyPath, 'utf8');
+      } else {
         throw new Error('私钥文件不存在');
       }
-      config.privateKey = fs.readFileSync(server.privateKeyPath, 'utf8');
       config.passphrase = server.privateKeyPassphrase || undefined;
     }
 

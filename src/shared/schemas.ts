@@ -30,6 +30,7 @@ const serverBaseSchema = z.object({
   username: z.string().trim().min(1, '用户名不能为空'),
   authType: z.enum(['password', 'privateKey']),
   password: z.string().optional(),
+  privateKey: z.string().optional(),
   privateKeyPath: z.string().optional(),
   privateKeyPassphrase: z.string().optional(),
   autoReconnect: z.boolean().default(true),
@@ -40,8 +41,8 @@ function validateServerAuth(value: z.infer<typeof serverBaseSchema>, ctx: z.Refi
   if (value.authType === 'password' && !value.password?.trim()) {
     ctx.addIssue({ code: 'custom', path: ['password'], message: '密码不能为空' });
   }
-  if (value.authType === 'privateKey' && !value.privateKeyPath?.trim()) {
-    ctx.addIssue({ code: 'custom', path: ['privateKeyPath'], message: '私钥路径不能为空' });
+  if (value.authType === 'privateKey' && !value.privateKey?.trim() && !value.privateKeyPath?.trim()) {
+    ctx.addIssue({ code: 'custom', path: ['privateKey'], message: '请填写私钥内容或选择私钥文件' });
   }
 }
 

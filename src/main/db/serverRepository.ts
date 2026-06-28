@@ -12,6 +12,7 @@ interface ServerRow {
   username: string;
   auth_type: 'password' | 'privateKey';
   password?: string;
+  private_key?: string;
   private_key_path?: string;
   private_key_passphrase?: string;
   auto_reconnect: number;
@@ -30,6 +31,7 @@ function mapServer(row: ServerRow): ServerConfig {
     username: row.username,
     authType: row.auth_type,
     password: row.password ?? undefined,
+    privateKey: row.private_key ?? undefined,
     privateKeyPath: row.private_key_path ?? undefined,
     privateKeyPassphrase: row.private_key_passphrase ?? undefined,
     autoReconnect: Boolean(row.auto_reconnect),
@@ -43,6 +45,7 @@ function publicServer(server: ServerConfig): ServerConfig {
   return {
     ...server,
     password: server.password ? undefined : server.password,
+    privateKey: server.privateKey ? undefined : server.privateKey,
     privateKeyPassphrase: server.privateKeyPassphrase ? undefined : server.privateKeyPassphrase
   };
 }
@@ -75,9 +78,9 @@ export class ServerRepository {
     getDatabase()
       .prepare(
         `INSERT INTO servers (
-          id, group_id, name, host, port, username, auth_type, password, private_key_path,
+          id, group_id, name, host, port, username, auth_type, password, private_key, private_key_path,
           private_key_passphrase, auto_reconnect, reconnect_interval, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .run(
         id,
@@ -88,6 +91,7 @@ export class ServerRepository {
         input.username,
         input.authType,
         input.authType === 'password' ? input.password : null,
+        input.authType === 'privateKey' ? input.privateKey : null,
         input.authType === 'privateKey' ? input.privateKeyPath : null,
         input.authType === 'privateKey' ? input.privateKeyPassphrase : null,
         input.autoReconnect ? 1 : 0,
@@ -104,7 +108,7 @@ export class ServerRepository {
       .prepare(
         `UPDATE servers SET
           group_id = ?, name = ?, host = ?, port = ?, username = ?, auth_type = ?, password = ?,
-          private_key_path = ?, private_key_passphrase = ?, auto_reconnect = ?, reconnect_interval = ?, updated_at = ?
+          private_key = ?, private_key_path = ?, private_key_passphrase = ?, auto_reconnect = ?, reconnect_interval = ?, updated_at = ?
         WHERE id = ?`
       )
       .run(
@@ -115,6 +119,7 @@ export class ServerRepository {
         input.username,
         input.authType,
         input.authType === 'password' ? input.password : null,
+        input.authType === 'privateKey' ? input.privateKey : null,
         input.authType === 'privateKey' ? input.privateKeyPath : null,
         input.authType === 'privateKey' ? input.privateKeyPassphrase : null,
         input.autoReconnect ? 1 : 0,

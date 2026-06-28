@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Upload } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import type { Group, ServerConfig } from '@shared/types';
 import { createServerSchema, type CreateServerInput } from '@shared/schemas';
@@ -8,6 +9,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { electronApi } from '@/api/electronApi';
 
 interface ServerFormProps {
   groups: Group[];
@@ -28,6 +31,7 @@ export function ServerForm({ groups, server, defaultGroupId, onSubmit, onCancel 
       username: server?.username ?? '',
       authType: server?.authType ?? 'password',
       password: '',
+      privateKey: '',
       privateKeyPath: server?.privateKeyPath ?? '',
       privateKeyPassphrase: '',
       autoReconnect: server?.autoReconnect ?? true,
@@ -35,6 +39,20 @@ export function ServerForm({ groups, server, defaultGroupId, onSubmit, onCancel 
     }
   });
   const authType = form.watch('authType');
+
+  const applyPrivateKeyFile = async (file: File) => {
+    const content = await file.text();
+    const path = (file as File & { path?: string }).path;
+    form.setValue('privateKey', content, { shouldDirty: true, shouldValidate: true });
+    form.setValue('privateKeyPath', path || file.name, { shouldDirty: true });
+  };
+
+  const selectPrivateKey = async () => {
+    const file = await electronApi.files.selectPrivateKey();
+    if (!file) return;
+    form.setValue('privateKey', file.content, { shouldDirty: true, shouldValidate: true });
+    form.setValue('privateKeyPath', file.path, { shouldDirty: true });
+  };
 
   return (
     <Form {...form}>
@@ -160,33 +178,67 @@ export function ServerForm({ groups, server, defaultGroupId, onSubmit, onCancel 
             )}
           />
         ) : (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-4">
             <FormField
               control={form.control}
-              name="privateKeyPath"
+              name="privateKey"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>私钥路径</FormLabel>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>私钥内容</FormLabel>
+                    <Button type="button" variant="secondary" size="sm" onClick={selectPrivateKey}>
+                      <Upload className="mr-2 h-4 w-4" />
+                      选择文件
+                    </Button>
+                  </div>
                   <FormControl>
-                    <Input {...field} />
+                    <Textarea
+                      className="min-h-32 resize-y font-mono text-xs"
+                      placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"
+                      {...field}
+                      onDragOver={(event) => {
+                        event.preventDefault();
+                        event.dataTransfer.dropEffect = 'copy';
+                      }}
+                      onDrop={(event) => {
+                        event.preventDefault();
+                        const file = event.dataTransfer.files?.[0];
+                        if (file) void applyPrivateKeyFile(file);
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="privateKeyPassphrase"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>私钥口令</FormLabel>
-                  <FormControl>
-                    <Input type="password" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="privateKeyPath"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>私钥文件</FormLabel>
+                    <FormControl>
+                      <Input placeholder="可选" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="privateKeyPassphrase"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>私钥口令</FormLabel>
+                    <FormControl>
+                      <Input type="password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
         )}
 

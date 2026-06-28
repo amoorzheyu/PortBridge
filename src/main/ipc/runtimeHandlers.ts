@@ -1,3 +1,5 @@
+import { dialog } from 'electron';
+import { readFile } from 'node:fs/promises';
 import { z } from 'zod';
 import { checkPortSchema, idSchema, listByServerSchema } from '../../shared/schemas';
 import { checkPortAvailable } from '../utils/checkPort';
@@ -17,5 +19,22 @@ export function registerRuntimeHandlers(tunnelManager: TunnelManager, logService
   registerHandler('logs:clear', null, () => {
     logService.clear();
     return true;
+  });
+  registerHandler('files:selectPrivateKey', null, async () => {
+    const result = await dialog.showOpenDialog({
+      title: '选择私钥文件',
+      properties: ['openFile'],
+      filters: [
+        { name: 'Private Keys', extensions: ['pem', 'key', 'ppk'] },
+        { name: 'All Files', extensions: ['*'] }
+      ]
+    });
+
+    if (result.canceled || !result.filePaths[0]) return null;
+    const path = result.filePaths[0];
+    return {
+      path,
+      content: await readFile(path, 'utf8')
+    };
   });
 }

@@ -52,6 +52,9 @@ const api = {
     list: () => invoke<AppLog[]>('logs:list'),
     clear: () => invoke<boolean>('logs:clear')
   },
+  files: {
+    selectPrivateKey: () => invoke<{ path: string; content: string } | null>('files:selectPrivateKey')
+  },
   events: {
     onStateChanged: (callback: (state: TunnelRuntimeState) => void) => {
       const listener = (_event: IpcRendererEvent, state: TunnelRuntimeState) => callback(state);

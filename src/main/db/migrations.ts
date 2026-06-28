@@ -21,6 +21,7 @@ export function runMigrations(db: Database.Database): void {
       username TEXT NOT NULL,
       auth_type TEXT NOT NULL,
       password TEXT,
+      private_key TEXT,
       private_key_path TEXT,
       private_key_passphrase TEXT,
       auto_reconnect INTEGER NOT NULL DEFAULT 1,
@@ -44,4 +45,9 @@ export function runMigrations(db: Database.Database): void {
       FOREIGN KEY (server_id) REFERENCES servers(id)
     );
   `);
+
+  const columns = db.prepare('PRAGMA table_info(servers)').all() as Array<{ name: string }>;
+  if (!columns.some((column) => column.name === 'private_key')) {
+    db.exec('ALTER TABLE servers ADD COLUMN private_key TEXT;');
+  }
 }

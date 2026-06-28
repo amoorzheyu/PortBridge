@@ -1,0 +1,13 @@
+功能规划.md
+node_modules/
+dist/
+dist-electron/
+out/
+release/
+.DS_Store
+*.log
+*.db
+*.db-shm
+*.db-wal
+.env
+.env.*

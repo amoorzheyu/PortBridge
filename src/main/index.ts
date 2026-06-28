@@ -31,7 +31,9 @@ function createWindow(): void {
 app.whenReady().then(() => {
   registerIpcHandlers(services);
   createWindow();
-  void services.tunnelManager.startAutoStartTunnels();
+  void services.tunnelManager.startAutoStartTunnels().catch((error) => {
+    services.logService.error(error instanceof Error ? error.message : '自动启动映射失败');
+  });
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

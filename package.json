@@ -6,11 +6,13 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "postinstall": "electron-builder install-app-deps",
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "dist": "electron-builder",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "rebuild:native": "electron-builder install-app-deps"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

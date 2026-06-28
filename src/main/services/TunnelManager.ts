@@ -21,11 +21,8 @@ interface RuntimeTunnel {
   startedAt?: string;
 }
 
-function getReconnectDelay(reconnectCount: number): number {
-  if (reconnectCount <= 1) return 3000;
-  if (reconnectCount === 2) return 5000;
-  if (reconnectCount === 3) return 10000;
-  return 30000;
+function getReconnectDelay(): number {
+  return 3000;
 }
 
 function closeServer(server?: net.Server): Promise<void> {
@@ -266,18 +263,9 @@ export class TunnelManager {
   private scheduleReconnect(runtime: RuntimeTunnel): void {
     if (runtime.reconnectTimer) return;
 
-    const server = this.serverRepository.get(runtime.serverId, true);
-    if (!server?.autoReconnect) {
-      runtime.status = 'error';
-      runtime.error = runtime.error || 'SSH 连接断开';
-      this.emitState(runtime);
-      this.logService.error(runtime.error);
-      return;
-    }
-
     runtime.status = 'reconnecting';
     runtime.reconnectCount += 1;
-    const delay = getReconnectDelay(runtime.reconnectCount);
+    const delay = getReconnectDelay();
     this.emitState(runtime);
     this.logService.warn(`SSH 连接断开，准备 ${Math.round(delay / 1000)} 秒后重连`);
 

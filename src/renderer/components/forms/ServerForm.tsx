@@ -8,7 +8,6 @@ import { DialogFooter } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { electronApi } from '@/api/electronApi';
 
@@ -33,9 +32,7 @@ export function ServerForm({ groups, server, defaultGroupId, onSubmit, onCancel 
       password: '',
       privateKey: '',
       privateKeyPath: server?.privateKeyPath ?? '',
-      privateKeyPassphrase: '',
-      autoReconnect: server?.autoReconnect ?? true,
-      reconnectInterval: server?.reconnectInterval ?? 3000
+      privateKeyPassphrase: ''
     }
   });
   const authType = form.watch('authType');
@@ -241,34 +238,6 @@ export function ServerForm({ groups, server, defaultGroupId, onSubmit, onCancel 
             </div>
           </div>
         )}
-
-        <div className="grid grid-cols-[1fr_140px] gap-4">
-          <FormField
-            control={form.control}
-            name="autoReconnect"
-            render={({ field }) => (
-              <FormItem className="flex items-center justify-between rounded-md border px-3 py-2">
-                <FormLabel>自动重连</FormLabel>
-                <FormControl>
-                  <Switch checked={field.value} onCheckedChange={field.onChange} />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="reconnectInterval"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>重连间隔</FormLabel>
-                <FormControl>
-                  <Input type="number" {...field} onChange={(event) => field.onChange(Number(event.target.value))} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onCancel}>

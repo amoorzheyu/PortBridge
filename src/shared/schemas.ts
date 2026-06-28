@@ -32,9 +32,7 @@ const serverBaseSchema = z.object({
   password: z.string().optional(),
   privateKey: z.string().optional(),
   privateKeyPath: z.string().optional(),
-  privateKeyPassphrase: z.string().optional(),
-  autoReconnect: z.boolean().default(true),
-  reconnectInterval: z.number().int().min(1000).default(3000)
+  privateKeyPassphrase: z.string().optional()
 });
 
 function validateServerAuth(value: z.infer<typeof serverBaseSchema>, ctx: z.RefinementCtx): void {

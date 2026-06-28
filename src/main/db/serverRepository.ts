@@ -94,8 +94,8 @@ export class ServerRepository {
         input.authType === 'privateKey' ? input.privateKey : null,
         input.authType === 'privateKey' ? input.privateKeyPath : null,
         input.authType === 'privateKey' ? input.privateKeyPassphrase : null,
-        input.autoReconnect ? 1 : 0,
-        input.reconnectInterval,
+        1,
+        3000,
         createdAt,
         createdAt
       );
@@ -122,8 +122,8 @@ export class ServerRepository {
         input.authType === 'privateKey' ? input.privateKey : null,
         input.authType === 'privateKey' ? input.privateKeyPath : null,
         input.authType === 'privateKey' ? input.privateKeyPassphrase : null,
-        input.autoReconnect ? 1 : 0,
-        input.reconnectInterval,
+        1,
+        3000,
         updatedAt,
         input.id
       );

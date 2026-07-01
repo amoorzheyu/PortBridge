@@ -145,23 +145,23 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   startTunnel: async (id) => runAction(async () => {
     await electronApi.runtime.startTunnel(id);
-  }, '已启动'),
+  }),
 
   stopTunnel: async (id) => runAction(async () => {
     await electronApi.runtime.stopTunnel(id);
-  }, '已停止'),
+  }),
 
   restartTunnel: async (id) => runAction(async () => {
     await electronApi.runtime.restartTunnel(id);
-  }, '已重连'),
+  }),
 
   startServerTunnels: async (serverId) => runAction(async () => {
     await electronApi.runtime.startServerTunnels(serverId);
-  }, '已启动'),
+  }),
 
   stopServerTunnels: async (serverId) => runAction(async () => {
     await electronApi.runtime.stopServerTunnels(serverId);
-  }, '已停止'),
+  }),
 
   clearLogs: async () => runAction(async () => {
     await electronApi.logs.clear();

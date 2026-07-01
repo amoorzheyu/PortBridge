@@ -73,12 +73,38 @@ jobs:
           path: release-assets
           merge-multiple: true
 
-      - name: Upload release assets
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: release-assets/*
           draft: false
           prerelease: ${{ contains(github.ref_name, '-') }}
-          fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload release assets in display order
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          upload_group() {
+            local name_pattern="$1"
+
+            while IFS= read -r -d '' file; do
+              gh release upload "$TAG_NAME" "$file" --clobber
+            done < <(find release-assets -maxdepth 1 -type f -name "$name_pattern" -print0 | sort -z)
+          }
+
+          upload_group "*Setup*.exe"
+          find release-assets -maxdepth 1 -type f -name "*.exe" ! -name "*Setup*.exe" -print0 | sort -z |
+            while IFS= read -r -d '' file; do
+              gh release upload "$TAG_NAME" "$file" --clobber
+            done
+          upload_group "*.dmg"
+          upload_group "*-mac.zip"
+          upload_group "*.AppImage"
+          upload_group "*.deb"
+          upload_group "*.yml"
+          upload_group "*.blockmap"

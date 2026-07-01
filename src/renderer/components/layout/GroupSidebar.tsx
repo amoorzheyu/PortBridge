@@ -53,38 +53,43 @@ export function GroupSidebar() {
             <span className="min-w-0 flex-1 truncate">全部</span>
             <span className="text-xs text-muted-foreground">{servers.length}</span>
           </button>
-          {groups.map((group) => (
-            <ContextMenu key={group.id}>
-              <ContextMenuTrigger asChild>
-                <div className={cn('group flex h-9 items-center rounded-md hover:bg-accent', selectedGroupId === group.id && 'bg-accent')}>
-                  <button className="flex min-w-0 flex-1 items-center gap-2 px-2 text-left text-sm" onClick={() => selectGroup(group.id)}>
-                    <Folder className="h-4 w-4 text-muted-foreground" />
-                    <span className="min-w-0 flex-1 truncate">{group.name}</span>
-                    <span className="text-xs text-muted-foreground">{counts[group.id] ?? 0}</span>
-                  </button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button size="icon" variant="ghost" className="mr-1 h-7 w-7 opacity-0 group-hover:opacity-100" aria-label="分组操作">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => openEdit(group)}>编辑</DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(group)}>
-                        删除
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </ContextMenuTrigger>
-              <ContextMenuContent>
-                <ContextMenuItem onClick={() => openEdit(group)}>编辑</ContextMenuItem>
-                <ContextMenuItem className="text-destructive" onClick={() => setDeleteTarget(group)}>
-                  删除
-                </ContextMenuItem>
-              </ContextMenuContent>
-            </ContextMenu>
-          ))}
+          {groups.map((group) => {
+            const serverCount = counts[group.id] ?? 0;
+            return (
+              <div key={group.id} className="space-y-1">
+                <ContextMenu>
+                  <ContextMenuTrigger asChild>
+                    <div className={cn('group flex h-9 items-center rounded-md hover:bg-accent', selectedGroupId === group.id && 'bg-accent')}>
+                      <button className="flex min-w-0 flex-1 items-center gap-2 px-2 text-left text-sm" onClick={() => selectGroup(group.id)}>
+                        <Folder className="h-4 w-4 text-muted-foreground" />
+                        <span className="min-w-0 flex-1 truncate">{group.name}</span>
+                        <span className="text-xs text-muted-foreground">{serverCount}</span>
+                      </button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="icon" variant="ghost" className="mr-1 h-7 w-7 opacity-0 group-hover:opacity-100" aria-label="分组操作">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => openEdit(group)}>编辑</DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(group)}>
+                            删除
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </ContextMenuTrigger>
+                  <ContextMenuContent>
+                    <ContextMenuItem onClick={() => openEdit(group)}>编辑</ContextMenuItem>
+                    <ContextMenuItem className="text-destructive" onClick={() => setDeleteTarget(group)}>
+                      删除
+                    </ContextMenuItem>
+                  </ContextMenuContent>
+                </ContextMenu>
+              </div>
+            );
+          })}
         </div>
       </ScrollArea>
 

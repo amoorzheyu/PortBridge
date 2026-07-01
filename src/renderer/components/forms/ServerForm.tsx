@@ -1,10 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronDown, ChevronRight, Upload } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { z } from 'zod';
 import type { Group, ServerConfig } from '@shared/types';
-import { createServerSchema, type CreateServerInput } from '@shared/schemas';
+import { createServerSchema, portSchema, type CreateServerInput } from '@shared/schemas';
 import { Button } from '@/components/ui/button';
 import { DialogFooter } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -21,16 +22,25 @@ interface ServerFormProps {
   onCancel: () => void;
 }
 
+type ServerFormInput = Omit<CreateServerInput, 'port'> & {
+  port: string;
+};
+
 export function ServerForm({ groups, server, defaultGroupId, onSubmit, onCancel }: ServerFormProps) {
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [testing, setTesting] = useState(false);
-  const form = useForm<CreateServerInput>({
-    resolver: zodResolver(createServerSchema),
+  const defaultPort = server?.port ?? 22;
+  const serverFormSchema = useMemo(() => createServerSchema.extend({
+    port: z.preprocess((value) => value === '' || value == null ? defaultPort : value, portSchema)
+  }), [defaultPort]);
+
+  const form = useForm<ServerFormInput, unknown, CreateServerInput>({
+    resolver: zodResolver(serverFormSchema),
     defaultValues: {
       groupId: server?.groupId ?? defaultGroupId ?? groups[0]?.id ?? '',
       name: server?.name ?? '',
       host: server?.host ?? '',
-      port: server?.port ?? 22,
+      port: server?.port ? String(server.port) : '',
       username: server?.username ?? '',
       authType: server?.authType ?? 'password',
       password: '',
@@ -61,7 +71,7 @@ export function ServerForm({ groups, server, defaultGroupId, onSubmit, onCancel 
 
     setTesting(true);
     try {
-      await electronApi.runtime.testServerConnection(form.getValues());
+      await electronApi.runtime.testServerConnection(serverFormSchema.parse(form.getValues()));
       toast.success('连接成功');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '连接失败');
@@ -135,9 +145,10 @@ export function ServerForm({ groups, server, defaultGroupId, onSubmit, onCancel 
                 <FormLabel>SSH 端口</FormLabel>
                 <FormControl>
                   <Input
-                    type="number"
+                    inputMode="numeric"
+                    placeholder={String(defaultPort)}
                     value={field.value ?? ''}
-                    onChange={(event) => field.onChange(event.target.value === '' ? undefined : Number(event.target.value))}
+                    onChange={(event) => field.onChange(event.target.value)}
                   />
                 </FormControl>
                 <FormMessage />

@@ -11,7 +11,7 @@ function createWindow(): void {
     height: 820,
     minWidth: 1060,
     minHeight: 680,
-    title: 'PortBridge',
+    title: '',
     backgroundColor: '#09090b',
     webPreferences: {
       preload: join(__dirname, '../preload/index.mjs'),
@@ -19,6 +19,11 @@ function createWindow(): void {
       nodeIntegration: false,
       sandbox: false
     }
+  });
+
+  mainWindow.on('page-title-updated', (event) => {
+    event.preventDefault();
+    mainWindow?.setTitle('');
   });
 
   if (process.env.ELECTRON_RENDERER_URL) {

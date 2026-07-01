@@ -1,8 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { z } from 'zod';
 import type { TunnelRule } from '@shared/types';
-import { createTunnelSchema, type CreateTunnelInput } from '@shared/schemas';
+import { checkPortSchema, createTunnelSchema, portSchema, type CreateTunnelInput } from '@shared/schemas';
 import { Button } from '@/components/ui/button';
 import { DialogFooter } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -17,16 +19,28 @@ interface TunnelFormProps {
   onCancel: () => void;
 }
 
+type TunnelFormInput = Omit<CreateTunnelInput, 'localPort' | 'remotePort'> & {
+  localPort: string;
+  remotePort: string;
+};
+
 export function TunnelForm({ serverId, tunnel, onSubmit, onCancel }: TunnelFormProps) {
-  const form = useForm<CreateTunnelInput>({
-    resolver: zodResolver(createTunnelSchema),
+  const defaultLocalPort = tunnel?.localPort ?? 3307;
+  const defaultRemotePort = tunnel?.remotePort ?? 3306;
+  const tunnelFormSchema = useMemo(() => createTunnelSchema.extend({
+    localPort: z.preprocess((value) => value === '' || value == null ? defaultLocalPort : value, portSchema),
+    remotePort: z.preprocess((value) => value === '' || value == null ? defaultRemotePort : value, portSchema)
+  }), [defaultLocalPort, defaultRemotePort]);
+
+  const form = useForm<TunnelFormInput, unknown, CreateTunnelInput>({
+    resolver: zodResolver(tunnelFormSchema),
     defaultValues: {
       serverId,
       name: tunnel?.name ?? '',
       localHost: tunnel?.localHost ?? '127.0.0.1',
-      localPort: tunnel?.localPort ?? 3307,
+      localPort: tunnel?.localPort ? String(tunnel.localPort) : '',
       remoteHost: tunnel?.remoteHost ?? '127.0.0.1',
-      remotePort: tunnel?.remotePort ?? 3306,
+      remotePort: tunnel?.remotePort ? String(tunnel.remotePort) : '',
       autoStart: tunnel?.autoStart ?? false
     }
   });
@@ -34,18 +48,24 @@ export function TunnelForm({ serverId, tunnel, onSubmit, onCancel }: TunnelFormP
   const checkPort = async () => {
     const localHost = form.getValues('localHost');
     const localPort = form.getValues('localPort');
-    if (!localPort) {
-      toast.error('端口必须是 1-65535');
+    const parsed = checkPortSchema.safeParse({
+      host: localHost,
+      port: localPort === '' ? defaultLocalPort : localPort
+    });
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0]?.message ?? '端口必须是 1-65535');
       return;
     }
-    const available = await electronApi.runtime.checkPort(localHost, localPort);
+    const available = await electronApi.runtime.checkPort(parsed.data.host, parsed.data.port);
     if (available) toast.success('端口可用');
-    else toast.error(`本地端口 ${localHost}:${localPort} 已被占用`);
+    else toast.error(`本地端口 ${parsed.data.host}:${parsed.data.port} 已被占用`);
   };
+
+  const handleSubmit = form.handleSubmit(onSubmit);
 
   return (
     <Form {...form}>
-      <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
+      <form className="space-y-5" onSubmit={handleSubmit}>
         <FormField
           control={form.control}
           name="name"
@@ -81,9 +101,10 @@ export function TunnelForm({ serverId, tunnel, onSubmit, onCancel }: TunnelFormP
                 <FormLabel>本地端口</FormLabel>
                 <FormControl>
                   <Input
-                    type="number"
+                    inputMode="numeric"
+                    placeholder={String(defaultLocalPort)}
                     value={field.value ?? ''}
-                    onChange={(event) => field.onChange(event.target.value === '' ? undefined : Number(event.target.value))}
+                    onChange={(event) => field.onChange(event.target.value)}
                   />
                 </FormControl>
                 <FormMessage />
@@ -113,9 +134,10 @@ export function TunnelForm({ serverId, tunnel, onSubmit, onCancel }: TunnelFormP
                 <FormLabel>远程端口</FormLabel>
                 <FormControl>
                   <Input
-                    type="number"
+                    inputMode="numeric"
+                    placeholder={String(defaultRemotePort)}
                     value={field.value ?? ''}
-                    onChange={(event) => field.onChange(event.target.value === '' ? undefined : Number(event.target.value))}
+                    onChange={(event) => field.onChange(event.target.value)}
                   />
                 </FormControl>
                 <FormMessage />

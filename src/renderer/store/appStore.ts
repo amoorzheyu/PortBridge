@@ -98,12 +98,12 @@ export const useAppStore = create<AppStore>((set, get) => ({
   createGroup: async (input) => runAction(async () => {
     await electronApi.groups.create(input);
     await get().loadAll();
-  }, '已保存'),
+  }),
 
   updateGroup: async (input) => runAction(async () => {
     await electronApi.groups.update(input);
     await get().loadAll();
-  }, '已保存'),
+  }),
 
   deleteGroup: async (id) => runAction(async () => {
     await electronApi.groups.delete(id);
@@ -115,12 +115,12 @@ export const useAppStore = create<AppStore>((set, get) => ({
     const server = await electronApi.servers.create(input);
     await get().loadAll();
     set({ selectedServerId: server.id });
-  }, '已保存'),
+  }),
 
   updateServer: async (input) => runAction(async () => {
     await electronApi.servers.update(input);
     await get().loadAll();
-  }, '已保存'),
+  }),
 
   deleteServer: async (id) => runAction(async () => {
     await electronApi.servers.delete(id);
@@ -131,12 +131,12 @@ export const useAppStore = create<AppStore>((set, get) => ({
   createTunnel: async (input) => runAction(async () => {
     await electronApi.tunnels.create(input);
     await get().loadAll();
-  }, '已保存'),
+  }),
 
   updateTunnel: async (input) => runAction(async () => {
     await electronApi.tunnels.update(input);
     await get().loadAll();
-  }, '已保存'),
+  }),
 
   deleteTunnel: async (id) => runAction(async () => {
     await electronApi.tunnels.delete(id);

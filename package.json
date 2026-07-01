@@ -72,10 +72,22 @@
       "out/**/*"
     ],
     "mac": {
-      "target": "dmg"
+      "target": [
+        "dmg",
+        "zip"
+      ]
     },
     "win": {
-      "target": "nsis"
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ]
     }
   }
 }

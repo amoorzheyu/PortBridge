@@ -35,7 +35,13 @@ npm run build
 npm run dist
 ```
 
-`electron-builder` 已配置 macOS `dmg` 和 Windows `nsis` 目标。
+`electron-builder` 已配置以下打包目标：
+
+- Windows：`nsis` 安装包、`portable` 便携版
+- macOS：`dmg` 安装包、`zip` 压缩包
+- Linux：`AppImage`、`deb`
+
+项目包含 `better-sqlite3` 原生依赖，建议在对应系统环境打对应平台的包，避免原生模块不匹配。
 
 ## 数据存储位置
 

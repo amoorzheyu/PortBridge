@@ -43,6 +43,17 @@ npm run dist
 
 项目包含 `better-sqlite3` 原生依赖，建议在对应系统环境打对应平台的包，避免原生模块不匹配。
 
+## 自动发布
+
+推送 `v*` 格式的 Git tag 会触发 GitHub Actions 自动打包并上传到 GitHub Release：
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+自动发布会分别在 Windows、macOS、Linux 环境打包，并上传 `nsis`、`portable`、`dmg`、`zip`、`AppImage`、`deb` 产物。
+
 ## 数据存储位置
 
 数据库文件保存在 Electron `userData` 目录下：

@@ -53,7 +53,23 @@ jobs:
         run: npm run build
 
       - name: Package app
+        if: matrix.name != 'macOS'
         run: npm run dist -- --publish never
+
+      - name: Package macOS app directory
+        if: matrix.name == 'macOS'
+        run: npm run dist -- --mac dir --publish never
+
+      - name: Ad-hoc sign macOS app
+        if: matrix.name == 'macOS'
+        run: |
+          chmod +x "release/mac/PortBridge.app/Contents/MacOS/"*
+          codesign --force --deep --sign - "release/mac/PortBridge.app"
+          codesign --verify --deep --strict "release/mac/PortBridge.app"
+
+      - name: Package signed macOS app
+        if: matrix.name == 'macOS'
+        run: npm run dist -- --mac dmg zip --prepackaged "release/mac/PortBridge.app" --publish never
 
       - name: Upload packaged assets
         uses: actions/upload-artifact@v4

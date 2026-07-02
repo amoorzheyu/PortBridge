@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>PortBridge</title>
+            <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only],
+.vscode-high-contrast:not(.vscode-high-contrast-light) img[src$=\#gh-light-mode-only],
+.vscode-high-contrast-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+</style>
+            
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+<style>
+:root {
+  --color-note: #0969da;
+  --color-tip: #1a7f37;
+  --color-warning: #9a6700;
+  --color-severe: #bc4c00;
+  --color-caution: #d1242f;
+  --color-important: #8250df;
+}
+
+</style>
+<style>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-note: #2f81f7;
+    --color-tip: #3fb950;
+    --color-warning: #d29922;
+    --color-severe: #db6d28;
+    --color-caution: #f85149;
+    --color-important: #a371f7;
+  }
+}
+
+</style>
+<style>
+.markdown-alert {
+  padding: 0.5rem 1rem;
+  margin-bottom: 16px;
+  color: inherit;
+  border-left: .25em solid #888;
+}
+
+.markdown-alert>:first-child {
+  margin-top: 0
+}
+
+.markdown-alert>:last-child {
+  margin-bottom: 0
+}
+
+.markdown-alert .markdown-alert-title {
+  display: flex;
+  font-weight: 500;
+  align-items: center;
+  line-height: 1
+}
+
+.markdown-alert .markdown-alert-title .octicon {
+  margin-right: 0.5rem;
+  display: inline-block;
+  overflow: visible !important;
+  vertical-align: text-bottom;
+  fill: currentColor;
+}
+
+.markdown-alert.markdown-alert-note {
+  border-left-color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-note .markdown-alert-title {
+  color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-important {
+  border-left-color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-important .markdown-alert-title {
+  color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-warning {
+  border-left-color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-warning .markdown-alert-title {
+  color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-tip {
+  border-left-color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-tip .markdown-alert-title {
+  color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-caution {
+  border-left-color: var(--color-caution);
+}
+
+.markdown-alert.markdown-alert-caution .markdown-alert-title {
+  color: var(--color-caution);
+}
+
+</style>
+        
+        </head>
+        <body class="vscode-body vscode-light">
+            <span id="markdown-mermaid" aria-hidden="true" data-config="{&quot;darkModeTheme&quot;:&quot;vscode&quot;,&quot;lightModeTheme&quot;:&quot;vscode&quot;,&quot;maxTextSize&quot;:50000,&quot;clickDrag&quot;:&quot;alt&quot;,&quot;showControls&quot;:&quot;onHoverOrFocus&quot;,&quot;resizable&quot;:true,&quot;maxHeight&quot;:&quot;&quot;}"></span>
+				<h1 id="portbridge">PortBridge</h1>
+<p>PortBridge 是一个专注于 SSH 本地端口映射的跨平台桌面客户端。它不是 SSH 终端工具，只管理 <code>-L localHost:localPort:remoteHost:remotePort</code> 形式的本地端口转发。</p>
+<h2 id="功能列表">功能列表</h2>
+<ul>
+<li>分组管理</li>
+<li>服务器配置管理</li>
+<li>密码 / 私钥认证，私钥支持粘贴、拖拽和选择文件</li>
+<li>多条本地端口映射规则</li>
+<li>单条启动、停止、重连</li>
+<li>服务器级一键启动 / 停止</li>
+<li>本地端口占用检测</li>
+<li>异常断开自动重连，固定 3000ms 间隔</li>
+<li>运行状态实时同步</li>
+<li>最近 500 条运行日志</li>
+<li>SQLite 本地保存配置</li>
+</ul>
+<h2 id="下载与安装">下载与安装</h2>
+<p>请在 GitHub Release 页面下载对应系统的安装包：</p>
+<ul>
+<li>Windows：下载 <code>.exe</code></li>
+<li>macOS：下载 <code>.dmg</code> 或 <code>-mac.zip</code></li>
+<li>Linux：下载 <code>.AppImage</code> 或 <code>.deb</code></li>
+</ul>
+<p>macOS 首次打开时如果系统提示应用无法打开，可以在系统设置的安全性选项中允许打开，或在终端中移除隔离属性：</p>
+<pre><code class="language-bash">xattr -dr com.apple.quarantine /Applications/PortBridge.app
+</code></pre>
+<h2 id="使用说明">使用说明</h2>
+<ol>
+<li>新增分组。</li>
+<li>在分组下新增服务器，选择密码或私钥认证。</li>
+<li>私钥可以直接粘贴、拖拽文件或点击选择文件。</li>
+<li>选中服务器后新增本地端口映射规则。</li>
+<li>点击映射规则的启动按钮，或在服务器上执行启动全部。</li>
+<li>在底部日志面板查看端口占用、SSH 连接和重连信息。</li>
+</ol>
+<h2 id="界面说明">界面说明</h2>
+<p>主界面采用三栏布局：左侧分组，中间服务器，右侧映射规则。底部是可折叠日志面板。</p>
+<h2 id="数据存储位置">数据存储位置</h2>
+<p>数据库文件保存在 Electron <code>userData</code> 目录下：</p>
+<pre><code class="language-txt">&lt;userData&gt;/data/portbridge.db
+</code></pre>
+<h2 id="注意事项">注意事项</h2>
+<ul>
+<li>配置暂时明文存储，密码和私钥内容不会写入日志。</li>
+<li>已保存密码不会返回界面，编辑服务器时需要重新输入认证密钥信息。</li>
+<li>PortBridge 只做本地端口转发，不提供 SSH 终端、SFTP 或远程文件管理。</li>
+<li>当前不支持跳板机、多级 SSH、远程端口转发和动态代理。</li>
+</ul>
+<h2 id="开发者说明">开发者说明</h2>
+<h3 id="技术栈">技术栈</h3>
+<ul>
+<li>Electron</li>
+<li>electron-vite</li>
+<li>React</li>
+<li>TypeScript</li>
+<li>Tailwind CSS</li>
+<li>shadcn/ui 风格组件</li>
+<li>lucide-react</li>
+<li>SQLite / better-sqlite3</li>
+</ul>
+<h3 id="安装依赖">安装依赖</h3>
+<pre><code class="language-bash">npm install
+</code></pre>
+<h3 id="开发启动">开发启动</h3>
+<pre><code class="language-bash">npm run dev
+</code></pre>
+<h3 id="打包">打包</h3>
+<pre><code class="language-bash">npm run build
+npm run dist
+</code></pre>
+<p><code>electron-builder</code> 已配置以下打包目标：</p>
+<ul>
+<li>Windows：<code>nsis</code> 安装包、<code>portable</code> 便携版</li>
+<li>macOS：<code>dmg</code> 安装包、<code>zip</code> 压缩包</li>
+<li>Linux：<code>AppImage</code>、<code>deb</code></li>
+</ul>
+<p>项目包含 <code>better-sqlite3</code> 原生依赖，建议在对应系统环境打对应平台的包，避免原生模块不匹配。</p>
+<h3 id="自动发布">自动发布</h3>
+<p>推送 <code>v*</code> 格式的 Git tag 会触发 GitHub Actions 自动打包并上传到 GitHub Release：</p>
+<pre><code class="language-bash">git tag v0.1.0
+git push origin v0.1.0
+</code></pre>
+<p>自动发布会分别在 Windows、macOS、Linux 环境打包，并上传 <code>.exe</code>、<code>.dmg</code>、<code>-mac.zip</code>、<code>.AppImage</code>、<code>.deb</code> 产物。</p>
+<h3 id="常用脚本">常用脚本</h3>
+<pre><code class="language-bash">npm run build
+npm run dist
+npm run lint
+npm run typecheck
+npm run rebuild:native
+</code></pre>
+<h2 id="后续计划">后续计划</h2>
+<ul>
+<li>macOS Keychain / Windows Credential Manager 加密凭据。</li>
+<li>系统托盘和开机自启。</li>
+<li>浅色主题。</li>
+<li>配置导入导出。</li>
+</ul>
+
+            
+            
+        </body>
+        </html>

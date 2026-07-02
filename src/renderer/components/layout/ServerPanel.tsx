@@ -79,17 +79,29 @@ export function ServerPanel() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => store.startServerTunnels(server.id)}>
+                        <DropdownMenuItem onClick={(event) => {
+                          event.stopPropagation();
+                          void store.startServerTunnels(server.id);
+                        }}>
                           <Play className="mr-2 h-4 w-4" />
                           启动全部
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => store.stopServerTunnels(server.id)}>
+                        <DropdownMenuItem onClick={(event) => {
+                          event.stopPropagation();
+                          void store.stopServerTunnels(server.id);
+                        }}>
                           <Square className="mr-2 h-4 w-4" />
                           停止全部
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => openEdit(server)}>编辑</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(server)}>
+                        <DropdownMenuItem onClick={(event) => {
+                          event.stopPropagation();
+                          openEdit(server);
+                        }}>编辑</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={(event) => {
+                          event.stopPropagation();
+                          setDeleteTarget(server);
+                        }}>
                           删除
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -119,6 +131,7 @@ export function ServerPanel() {
             <DialogTitle>{editingServer ? '编辑服务器' : '新增服务器'}</DialogTitle>
           </DialogHeader>
           <ServerForm
+            key={editingServer?.id ?? 'create'}
             groups={store.groups}
             server={editingServer}
             defaultGroupId={store.selectedGroupId === 'all' ? undefined : store.selectedGroupId}

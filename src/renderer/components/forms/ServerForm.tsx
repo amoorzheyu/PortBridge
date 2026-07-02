@@ -3,9 +3,8 @@ import { ChevronDown, ChevronRight, Upload } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { z } from 'zod';
 import type { Group, ServerConfig } from '@shared/types';
-import { createServerSchema, portSchema, type CreateServerInput } from '@shared/schemas';
+import { createServerInputSchema, type CreateServerInput } from '@shared/schemas';
 import { Button } from '@/components/ui/button';
 import { DialogFooter } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -30,9 +29,10 @@ export function ServerForm({ groups, server, defaultGroupId, onSubmit, onCancel 
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [testing, setTesting] = useState(false);
   const defaultPort = server?.port ?? 22;
-  const serverFormSchema = useMemo(() => createServerSchema.extend({
-    port: z.preprocess((value) => value === '' || value == null ? defaultPort : value, portSchema)
-  }), [defaultPort]);
+  const serverFormSchema = useMemo(() => createServerInputSchema({
+    defaultPort,
+    requireSecret: !server
+  }), [defaultPort, server]);
 
   const form = useForm<ServerFormInput, unknown, CreateServerInput>({
     resolver: zodResolver(serverFormSchema),

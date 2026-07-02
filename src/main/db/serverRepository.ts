@@ -103,7 +103,38 @@ export class ServerRepository {
   }
 
   update(input: UpdateServerInput): ServerConfig {
+    const current = this.get(input.id, true);
+    if (!current) throw new Error('服务器不存在');
+
     const updatedAt = nowIso();
+    const password = input.password?.trim()
+      ? input.password
+      : current.authType === 'password' && current.password
+        ? current.password
+        : null;
+    const privateKey = input.privateKey?.trim()
+      ? input.privateKey
+      : current.authType === 'privateKey' && current.privateKey
+        ? current.privateKey
+        : null;
+    const privateKeyPath = input.privateKeyPath?.trim()
+      ? input.privateKeyPath
+      : current.authType === 'privateKey' && current.privateKeyPath
+        ? current.privateKeyPath
+        : null;
+    const privateKeyPassphrase = input.privateKeyPassphrase?.trim()
+      ? input.privateKeyPassphrase
+      : current.authType === 'privateKey' && current.privateKeyPassphrase
+        ? current.privateKeyPassphrase
+        : null;
+
+    if (input.authType === 'password' && !password) {
+      throw new Error('密码不能为空');
+    }
+    if (input.authType === 'privateKey' && !privateKey && !privateKeyPath) {
+      throw new Error('请填写私钥内容或选择私钥文件');
+    }
+
     getDatabase()
       .prepare(
         `UPDATE servers SET
@@ -118,10 +149,10 @@ export class ServerRepository {
         input.port,
         input.username,
         input.authType,
-        input.authType === 'password' ? input.password : null,
-        input.authType === 'privateKey' ? input.privateKey : null,
-        input.authType === 'privateKey' ? input.privateKeyPath : null,
-        input.authType === 'privateKey' ? input.privateKeyPassphrase : null,
+        input.authType === 'password' ? password : null,
+        input.authType === 'privateKey' ? privateKey : null,
+        input.authType === 'privateKey' ? privateKeyPath : null,
+        input.authType === 'privateKey' ? privateKeyPassphrase : null,
         1,
         3000,
         updatedAt,

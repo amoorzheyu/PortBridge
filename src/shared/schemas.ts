@@ -43,7 +43,9 @@ const serverBaseSchema = z.object({
   privateKeyPassphrase: z.string().optional()
 });
 
-function validateServerAuth(value: z.infer<typeof serverBaseSchema>, ctx: z.RefinementCtx): void {
+function validateServerAuth(value: z.infer<typeof serverBaseSchema>, ctx: z.RefinementCtx, requireSecret: boolean): void {
+  if (!requireSecret) return;
+
   if (value.authType === 'password' && !value.password?.trim()) {
     ctx.addIssue({ code: 'custom', path: ['password'], message: '密码不能为空' });
   }
@@ -52,13 +54,30 @@ function validateServerAuth(value: z.infer<typeof serverBaseSchema>, ctx: z.Refi
   }
 }
 
-export const createServerSchema = serverBaseSchema.superRefine(validateServerAuth);
+interface ServerSchemaOptions {
+  defaultPort?: number;
+  requireSecret?: boolean;
+}
 
-export const updateServerSchema = serverBaseSchema
+function createServerObjectSchema(defaultPort = 22) {
+  return serverBaseSchema
+    .extend({
+      port: z.preprocess((value) => value === '' || value == null ? defaultPort : value, portSchema)
+    });
+}
+
+export function createServerInputSchema({ defaultPort = 22, requireSecret = true }: ServerSchemaOptions = {}) {
+  return createServerObjectSchema(defaultPort)
+    .superRefine((value, ctx) => validateServerAuth(value, ctx, requireSecret));
+}
+
+export const createServerSchema = createServerInputSchema();
+export const editServerSchema = createServerInputSchema({ requireSecret: false });
+export const updateServerSchema = createServerObjectSchema()
   .extend({
     id: z.string().min(1)
   })
-  .superRefine(validateServerAuth);
+  .superRefine((value, ctx) => validateServerAuth(value, ctx, false));
 
 export const createTunnelSchema = z.object({
   serverId: z.string().min(1, '请选择服务器'),

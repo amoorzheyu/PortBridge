@@ -20,21 +20,16 @@ jobs:
             os: windows-latest
             artifact_glob: |
               release/*.exe
-              release/*.blockmap
-              release/latest.yml
           - name: macOS
             os: macos-latest
             artifact_glob: |
               release/*.dmg
               release/*.zip
-              release/*.blockmap
-              release/latest-mac.yml
           - name: Linux
             os: ubuntu-latest
             artifact_glob: |
               release/*.AppImage
               release/*.deb
-              release/latest-linux.yml
 
     steps:
       - name: Checkout
@@ -123,5 +118,3 @@ jobs:
           upload_group "*-mac.zip"
           upload_group "*.AppImage"
           upload_group "*.deb"
-          upload_group "*.yml"
-          upload_group "*.blockmap"

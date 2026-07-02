@@ -55,16 +55,32 @@ jobs:
         if: matrix.name == 'macOS'
         run: npm run dist -- --mac dir --publish never
 
+      - name: Locate macOS app
+        if: matrix.name == 'macOS'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          app_path="$(find release -type d -name "PortBridge.app" -print -quit)"
+          if [ -z "$app_path" ]; then
+            echo "PortBridge.app was not found under release/"
+            find release -maxdepth 3 -print
+            exit 1
+          fi
+
+          echo "MAC_APP_PATH=$app_path" >> "$GITHUB_ENV"
+          echo "Found macOS app at $app_path"
+
       - name: Ad-hoc sign macOS app
         if: matrix.name == 'macOS'
         run: |
-          chmod +x "release/mac/PortBridge.app/Contents/MacOS/"*
-          codesign --force --deep --sign - "release/mac/PortBridge.app"
-          codesign --verify --deep --strict "release/mac/PortBridge.app"
+          chmod +x "$MAC_APP_PATH/Contents/MacOS/"*
+          codesign --force --deep --sign - "$MAC_APP_PATH"
+          codesign --verify --deep --strict "$MAC_APP_PATH"
 
       - name: Package signed macOS app
         if: matrix.name == 'macOS'
-        run: npm run dist -- --mac dmg zip --prepackaged "release/mac/PortBridge.app" --publish never
+        run: npm run dist -- --mac dmg zip --prepackaged "$MAC_APP_PATH" --publish never
 
       - name: Upload packaged assets
         uses: actions/upload-artifact@v4

@@ -68,6 +68,7 @@ export interface ConfigFileSummary {
   groups?: number;
   servers?: number;
   tunnels?: number;
+  conflicts?: ConfigImportConflict[];
 }
 
 export interface ConfigImportFileInfo {
@@ -79,4 +80,18 @@ export interface ConfigImportResult {
   groups: number;
   servers: number;
   tunnels: number;
+  updatedGroups?: number;
+  updatedServers?: number;
+  updatedTunnels?: number;
+  skippedGroups?: number;
+  skippedServers?: number;
+  skippedTunnels?: number;
+}
+
+export type ConfigImportConflictType = 'server' | 'tunnel';
+
+export interface ConfigImportConflict {
+  type: ConfigImportConflictType;
+  name: string;
+  parentName: string;
 }

@@ -36,7 +36,7 @@ interface AppStore {
   selectImportFile: () => Promise<ConfigImportFileInfo | null>;
   inspectImportFile: (path: string) => Promise<ConfigFileSummary>;
   previewImport: (path: string, password?: string) => Promise<ConfigFileSummary>;
-  importConfig: (path: string, password?: string) => Promise<ConfigImportResult>;
+  importConfig: (path: string, password?: string, overwriteConflicts?: boolean) => Promise<ConfigImportResult>;
   applyState: (state: TunnelRuntimeState) => void;
   appendLog: (log: AppLog) => void;
   resetLogs: () => void;
@@ -197,8 +197,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   previewImport: async (path, password) => electronApi.config.previewImport(path, password),
 
-  importConfig: async (path, password) => {
-    const result = await electronApi.config.import(path, password);
+  importConfig: async (path, password, overwriteConflicts) => {
+    const result = await electronApi.config.import(path, password, overwriteConflicts);
     await get().loadAll();
     toast.success('配置已导入');
     return result;

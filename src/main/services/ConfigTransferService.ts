@@ -3,7 +3,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { basename } from 'node:path';
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'node:crypto';
 import { z } from 'zod';
-import type { ConfigExportData, ConfigFileSummary, ConfigImportFileInfo, ConfigImportResult, Group, ServerConfig, TunnelRule } from '../../shared/types';
+import type { ConfigExportData, ConfigFileSummary, ConfigImportConflict, ConfigImportFileInfo, ConfigImportResult, Group, ServerConfig, TunnelRule } from '../../shared/types';
 import { getDatabase } from '../db/database';
 import { GroupRepository } from '../db/groupRepository';
 import { ServerRepository } from '../db/serverRepository';
@@ -156,6 +156,43 @@ function summarize(path: string): ConfigFileSummary {
   };
 }
 
+function sameName(left: string, right: string): boolean {
+  return left.trim() === right.trim();
+}
+
+function sameServerContent(left: ServerConfig, right: ServerConfig): boolean {
+  return left.host === right.host
+    && left.port === right.port
+    && left.username === right.username
+    && left.authType === right.authType
+    && (left.password ?? '') === (right.password ?? '')
+    && (left.privateKey ?? '') === (right.privateKey ?? '')
+    && (left.privateKeyPath ?? '') === (right.privateKeyPath ?? '')
+    && (left.privateKeyPassphrase ?? '') === (right.privateKeyPassphrase ?? '')
+    && left.autoReconnect === right.autoReconnect
+    && left.reconnectInterval === right.reconnectInterval;
+}
+
+function sameTunnelContent(left: TunnelRule, right: TunnelRule): boolean {
+  return left.localHost === right.localHost
+    && left.localPort === right.localPort
+    && left.remoteHost === right.remoteHost
+    && left.remotePort === right.remotePort
+    && left.autoStart === right.autoStart;
+}
+
+interface ImportPlan {
+  conflicts: ConfigImportConflict[];
+  groupsToCreate: Group[];
+  serversToCreate: ServerConfig[];
+  serversToUpdate: Array<{ current: ServerConfig; incoming: ServerConfig }>;
+  tunnelsToCreate: TunnelRule[];
+  tunnelsToUpdate: Array<{ current: TunnelRule; incoming: TunnelRule }>;
+  skippedGroups: number;
+  skippedServers: number;
+  skippedTunnels: number;
+}
+
 export class ConfigTransferService {
   constructor(
     private readonly groupRepository: GroupRepository,
@@ -208,11 +245,13 @@ export class ConfigTransferService {
 
   previewImport(path: string, password?: string): ConfigFileSummary {
     const data = readConfigData(path, password);
+    const plan = this.createImportPlan(data, nowIso());
     return {
       encrypted: false,
       groups: data.groups.length,
       servers: data.servers.length,
-      tunnels: data.tunnels.length
+      tunnels: data.tunnels.length,
+      conflicts: plan.conflicts
     };
   }
 
@@ -220,40 +259,23 @@ export class ConfigTransferService {
     return summarize(path);
   }
 
-  importConfig(path: string, password?: string): ConfigImportResult {
+  importConfig(path: string, password?: string, overwriteConflicts = false): ConfigImportResult {
     const data = readConfigData(path, password);
     const db = getDatabase();
     const importedAt = nowIso();
-    const groupIdMap = new Map<string, string>();
-    const serverIdMap = new Map<string, string>();
+    const plan = this.createImportPlan(data, importedAt);
+
+    if (plan.conflicts.length > 0 && !overwriteConflicts) {
+      throw new Error('存在同名但内容不同的配置，请确认是否覆盖');
+    }
 
     const transaction = db.transaction(() => {
-      data.groups.forEach((group) => {
-        const nextGroup: Group = {
-          ...group,
-          id: createId(),
-          name: group.name,
-          sortOrder: Date.now(),
-          createdAt: importedAt,
-          updatedAt: importedAt
-        };
-        groupIdMap.set(group.id, nextGroup.id);
+      plan.groupsToCreate.forEach((nextGroup) => {
         db.prepare('INSERT INTO groups (id, name, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?)')
           .run(nextGroup.id, nextGroup.name, nextGroup.sortOrder, nextGroup.createdAt, nextGroup.updatedAt);
       });
 
-      data.servers.forEach((server) => {
-        const groupId = groupIdMap.get(server.groupId);
-        if (!groupId) return;
-
-        const nextServer: ServerConfig = {
-          ...server,
-          id: createId(),
-          groupId,
-          createdAt: importedAt,
-          updatedAt: importedAt
-        };
-        serverIdMap.set(server.id, nextServer.id);
+      plan.serversToCreate.forEach((nextServer) => {
         db.prepare(
           `INSERT INTO servers (
             id, group_id, name, host, port, username, auth_type, password, private_key, private_key_path,
@@ -278,17 +300,33 @@ export class ConfigTransferService {
         );
       });
 
-      data.tunnels.forEach((tunnel) => {
-        const serverId = serverIdMap.get(tunnel.serverId);
-        if (!serverId) return;
+      if (overwriteConflicts) {
+        plan.serversToUpdate.forEach(({ current, incoming }) => {
+          db.prepare(
+            `UPDATE servers SET
+              group_id = ?, name = ?, host = ?, port = ?, username = ?, auth_type = ?, password = ?,
+              private_key = ?, private_key_path = ?, private_key_passphrase = ?, auto_reconnect = ?, reconnect_interval = ?, updated_at = ?
+            WHERE id = ?`
+          ).run(
+            current.groupId,
+            current.name,
+            incoming.host,
+            incoming.port,
+            incoming.username,
+            incoming.authType,
+            incoming.authType === 'password' ? incoming.password ?? null : null,
+            incoming.authType === 'privateKey' ? incoming.privateKey ?? null : null,
+            incoming.authType === 'privateKey' ? incoming.privateKeyPath ?? null : null,
+            incoming.authType === 'privateKey' ? incoming.privateKeyPassphrase ?? null : null,
+            incoming.autoReconnect ? 1 : 0,
+            incoming.reconnectInterval,
+            importedAt,
+            current.id
+          );
+        });
+      }
 
-        const nextTunnel: TunnelRule = {
-          ...tunnel,
-          id: createId(),
-          serverId,
-          createdAt: importedAt,
-          updatedAt: importedAt
-        };
+      plan.tunnelsToCreate.forEach((nextTunnel) => {
         db.prepare(
           `INSERT INTO tunnels (
             id, server_id, name, local_host, local_port, remote_host, remote_port, auto_start, created_at, updated_at
@@ -306,14 +344,144 @@ export class ConfigTransferService {
           nextTunnel.updatedAt
         );
       });
+
+      if (overwriteConflicts) {
+        plan.tunnelsToUpdate.forEach(({ current, incoming }) => {
+          db.prepare(
+            `UPDATE tunnels SET
+              server_id = ?, name = ?, local_host = ?, local_port = ?, remote_host = ?, remote_port = ?, auto_start = ?, updated_at = ?
+            WHERE id = ?`
+          ).run(
+            current.serverId,
+            current.name,
+            incoming.localHost,
+            incoming.localPort,
+            incoming.remoteHost,
+            incoming.remotePort,
+            incoming.autoStart ? 1 : 0,
+            importedAt,
+            current.id
+          );
+        });
+      }
     });
 
     transaction();
 
     return {
-      groups: groupIdMap.size,
-      servers: serverIdMap.size,
-      tunnels: data.tunnels.filter((tunnel) => serverIdMap.has(tunnel.serverId)).length
+      groups: plan.groupsToCreate.length,
+      servers: plan.serversToCreate.length,
+      tunnels: plan.tunnelsToCreate.length,
+      updatedGroups: 0,
+      updatedServers: overwriteConflicts ? plan.serversToUpdate.length : 0,
+      updatedTunnels: overwriteConflicts ? plan.tunnelsToUpdate.length : 0,
+      skippedGroups: plan.skippedGroups,
+      skippedServers: plan.skippedServers,
+      skippedTunnels: plan.skippedTunnels
+    };
+  }
+
+  private createImportPlan(data: ConfigExportData, importedAt: string): ImportPlan {
+    const groups = this.groupRepository.list();
+    const servers = this.serverRepository.listWithSecrets();
+    const tunnels = this.tunnelRepository.list();
+    const groupIdMap = new Map<string, string>();
+    const serverIdMap = new Map<string, string>();
+    const groupsToCreate: Group[] = [];
+    const serversToCreate: ServerConfig[] = [];
+    const serversToUpdate: ImportPlan['serversToUpdate'] = [];
+    const tunnelsToCreate: TunnelRule[] = [];
+    const tunnelsToUpdate: ImportPlan['tunnelsToUpdate'] = [];
+    const conflicts: ConfigImportConflict[] = [];
+    let skippedGroups = 0;
+    let skippedServers = 0;
+    let skippedTunnels = 0;
+
+    data.groups.forEach((group, index) => {
+      const current = groups.find((item) => sameName(item.name, group.name));
+      if (current) {
+        groupIdMap.set(group.id, current.id);
+        skippedGroups += 1;
+        return;
+      }
+
+      const nextGroup: Group = {
+        ...group,
+        id: createId(),
+        sortOrder: Date.now() + index,
+        createdAt: importedAt,
+        updatedAt: importedAt
+      };
+      groups.push(nextGroup);
+      groupsToCreate.push(nextGroup);
+      groupIdMap.set(group.id, nextGroup.id);
+    });
+
+    data.servers.forEach((server) => {
+      const groupId = groupIdMap.get(server.groupId);
+      if (!groupId) return;
+
+      const current = servers.find((item) => item.groupId === groupId && sameName(item.name, server.name));
+      if (current) {
+        serverIdMap.set(server.id, current.id);
+        if (sameServerContent(server, current)) {
+          skippedServers += 1;
+        } else {
+          conflicts.push({ type: 'server', name: current.name, parentName: groups.find((group) => group.id === groupId)?.name ?? '未分组' });
+          serversToUpdate.push({ current, incoming: server });
+        }
+        return;
+      }
+
+      const nextServer: ServerConfig = {
+        ...server,
+        id: createId(),
+        groupId,
+        createdAt: importedAt,
+        updatedAt: importedAt
+      };
+      servers.push(nextServer);
+      serversToCreate.push(nextServer);
+      serverIdMap.set(server.id, nextServer.id);
+    });
+
+    data.tunnels.forEach((tunnel) => {
+      const serverId = serverIdMap.get(tunnel.serverId);
+      if (!serverId) return;
+
+      const current = tunnels.find((item) => item.serverId === serverId && sameName(item.name, tunnel.name));
+      if (current) {
+        if (sameTunnelContent(tunnel, current)) {
+          skippedTunnels += 1;
+        } else {
+          const parentName = servers.find((server) => server.id === serverId)?.name ?? '未知服务器';
+          conflicts.push({ type: 'tunnel', name: current.name, parentName });
+          tunnelsToUpdate.push({ current, incoming: tunnel });
+        }
+        return;
+      }
+
+      const nextTunnel: TunnelRule = {
+        ...tunnel,
+        id: createId(),
+        serverId,
+        createdAt: importedAt,
+        updatedAt: importedAt
+      };
+      tunnels.push(nextTunnel);
+      tunnelsToCreate.push(nextTunnel);
+    });
+
+    return {
+      conflicts,
+      groupsToCreate,
+      serversToCreate,
+      serversToUpdate,
+      tunnelsToCreate,
+      tunnelsToUpdate,
+      skippedGroups,
+      skippedServers,
+      skippedTunnels
     };
   }
 }

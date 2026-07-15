@@ -53,7 +53,7 @@ declare global {
         selectImportFile: () => Promise<ConfigImportFileInfo | null>;
         inspectImportFile: (path: string) => Promise<ConfigFileSummary>;
         previewImport: (path: string, password?: string) => Promise<ConfigFileSummary>;
-        import: (path: string, password?: string) => Promise<ConfigImportResult>;
+        import: (path: string, password?: string, overwriteConflicts?: boolean) => Promise<ConfigImportResult>;
       };
       files: {
         selectPrivateKey: () => Promise<{ path: string; content: string } | null>;

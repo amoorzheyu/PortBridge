@@ -58,7 +58,7 @@ const api = {
     selectImportFile: () => invoke<ConfigImportFileInfo | null>('config:selectImportFile'),
     inspectImportFile: (path: string) => invoke<ConfigFileSummary>('config:inspectImportFile', { path }),
     previewImport: (path: string, password?: string) => invoke<ConfigFileSummary>('config:previewImport', { path, password }),
-    import: (path: string, password?: string) => invoke<ConfigImportResult>('config:import', { path, password })
+    import: (path: string, password?: string, overwriteConflicts?: boolean) => invoke<ConfigImportResult>('config:import', { path, password, overwriteConflicts })
   },
   files: {
     selectPrivateKey: () => invoke<{ path: string; content: string } | null>('files:selectPrivateKey')

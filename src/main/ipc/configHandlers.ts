@@ -8,7 +8,8 @@ const passwordSchema = z.object({
 
 const importSchema = z.object({
   path: z.string().min(1),
-  password: z.string().optional()
+  password: z.string().optional(),
+  overwriteConflicts: z.boolean().optional()
 });
 
 export function registerConfigHandlers(configTransferService: ConfigTransferService): void {
@@ -16,5 +17,5 @@ export function registerConfigHandlers(configTransferService: ConfigTransferServ
   registerHandler('config:selectImportFile', null, () => configTransferService.selectImportFile());
   registerHandler('config:inspectImportFile', z.object({ path: z.string().min(1) }), (input: { path: string }) => configTransferService.inspectImportFile(input.path));
   registerHandler('config:previewImport', importSchema, (input: z.infer<typeof importSchema>) => configTransferService.previewImport(input.path, input.password));
-  registerHandler('config:import', importSchema, (input: z.infer<typeof importSchema>) => configTransferService.importConfig(input.path, input.password));
+  registerHandler('config:import', importSchema, (input: z.infer<typeof importSchema>) => configTransferService.importConfig(input.path, input.password, input.overwriteConflicts));
 }

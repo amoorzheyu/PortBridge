@@ -38,7 +38,7 @@ export function createAppServices(): AppServices {
 }
 
 export function registerIpcHandlers(services: AppServices): void {
-  registerGroupHandlers(services.groupRepository);
+  registerGroupHandlers(services.groupRepository, services.tunnelManager);
   registerServerHandlers(services.serverRepository, services.tunnelManager);
   registerTunnelHandlers(services.tunnelRepository, services.tunnelManager);
   registerRuntimeHandlers(services.tunnelManager, services.logService);

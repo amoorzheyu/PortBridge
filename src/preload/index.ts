@@ -23,7 +23,9 @@ const api = {
     list: () => invoke<Group[]>('groups:list'),
     create: (input: CreateGroupInput) => invoke<Group>('groups:create', input),
     update: (input: UpdateGroupInput) => invoke<Group>('groups:update', input),
-    delete: (id: string) => invoke<boolean>('groups:delete', { id })
+    delete: (id: string) => invoke<boolean>('groups:delete', { id }),
+    deleteEmpty: () => invoke<number>('groups:deleteEmpty'),
+    deleteAllData: () => invoke<boolean>('groups:deleteAllData')
   },
   servers: {
     list: () => invoke<ServerConfig[]>('servers:list'),

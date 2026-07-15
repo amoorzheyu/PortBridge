@@ -1,15 +1,16 @@
 import { useMemo, useState } from 'react';
-import { Download, Folder, MoreHorizontal, Plus, Upload } from 'lucide-react';
+import { Download, Folder, MoreHorizontal, Plus, Trash2, Upload } from 'lucide-react';
 import type { Group } from '@shared/types';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { GroupForm } from '@/components/forms/GroupForm';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { ConfigTransferDialog } from './ConfigTransferDialog';
+import { DeleteDataDialog } from './DeleteDataDialog';
 import { useAppStore } from '@/store/appStore';
 import { cn } from '@/lib/utils';
 
@@ -19,6 +20,7 @@ export function GroupSidebar() {
   const [deleteTarget, setDeleteTarget] = useState<Group | undefined>();
   const [open, setOpen] = useState(false);
   const [configDialog, setConfigDialog] = useState<'import' | 'export' | undefined>();
+  const [deleteDataOpen, setDeleteDataOpen] = useState(false);
   const counts = useMemo(() => {
     return groups.reduce<Record<string, number>>((acc, group) => {
       acc[group.id] = servers.filter((server) => server.groupId === group.id).length;
@@ -55,6 +57,11 @@ export function GroupSidebar() {
               <DropdownMenuItem onClick={() => setConfigDialog('export')}>
                 <Download className="mr-2 h-4 w-4" />
                 导出配置
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setDeleteDataOpen(true)}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                删除数据
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -151,6 +158,8 @@ export function GroupSidebar() {
           }}
         />
       ) : null}
+
+      <DeleteDataDialog open={deleteDataOpen} onOpenChange={setDeleteDataOpen} />
     </aside>
   );
 }

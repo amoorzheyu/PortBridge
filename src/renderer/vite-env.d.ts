@@ -19,6 +19,8 @@ declare global {
         create: (input: CreateGroupInput) => Promise<Group>;
         update: (input: UpdateGroupInput) => Promise<Group>;
         delete: (id: string) => Promise<boolean>;
+        deleteEmpty: () => Promise<number>;
+        deleteAllData: () => Promise<boolean>;
       };
       servers: {
         list: () => Promise<ServerConfig[]>;

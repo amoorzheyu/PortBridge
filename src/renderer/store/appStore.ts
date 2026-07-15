@@ -20,6 +20,8 @@ interface AppStore {
   createGroup: (input: CreateGroupInput) => Promise<void>;
   updateGroup: (input: UpdateGroupInput) => Promise<void>;
   deleteGroup: (id: string) => Promise<void>;
+  deleteEmptyGroups: () => Promise<void>;
+  deleteAllData: () => Promise<void>;
   createServer: (input: CreateServerInput) => Promise<void>;
   updateServer: (input: UpdateServerInput) => Promise<void>;
   deleteServer: (id: string) => Promise<void>;
@@ -115,6 +117,26 @@ export const useAppStore = create<AppStore>((set, get) => ({
     if (get().selectedGroupId === id) set({ selectedGroupId: 'all' });
     await get().loadAll();
   }, '已删除'),
+
+  deleteEmptyGroups: async () => {
+    try {
+      const count = await electronApi.groups.deleteEmpty();
+      await get().loadAll();
+      const selectedGroupId = get().selectedGroupId;
+      if (selectedGroupId !== 'all' && !get().groups.some((group) => group.id === selectedGroupId)) {
+        set({ selectedGroupId: 'all' });
+      }
+      toast.success(count > 0 ? `已删除 ${count} 个分组` : '没有可删除的分组');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '操作失败');
+    }
+  },
+
+  deleteAllData: async () => runAction(async () => {
+    await electronApi.groups.deleteAllData();
+    set({ selectedGroupId: 'all', selectedServerId: undefined });
+    await get().loadAll();
+  }, '已删除所有数据'),
 
   createServer: async (input) => runAction(async () => {
     const server = await electronApi.servers.create(input);

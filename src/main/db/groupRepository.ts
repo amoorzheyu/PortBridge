@@ -62,4 +62,26 @@ export class GroupRepository {
     if (serverCount.count > 0) throw new Error('该分组下还有服务器，请先删除服务器。');
     getDatabase().prepare('DELETE FROM groups WHERE id = ?').run(id);
   }
+
+  deleteEmptyGroups(): number {
+    const result = getDatabase()
+      .prepare(
+        `DELETE FROM groups
+        WHERE NOT EXISTS (
+          SELECT 1 FROM servers WHERE servers.group_id = groups.id
+        )`
+      )
+      .run();
+    return result.changes;
+  }
+
+  deleteAllData(): void {
+    const db = getDatabase();
+    const transaction = db.transaction(() => {
+      db.prepare('DELETE FROM tunnels').run();
+      db.prepare('DELETE FROM servers').run();
+      db.prepare('DELETE FROM groups').run();
+    });
+    transaction();
+  }
 }

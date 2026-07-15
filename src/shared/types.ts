@@ -56,3 +56,27 @@ export interface AppLog {
   message: string;
   createdAt: string;
 }
+
+export interface ConfigExportData {
+  groups: Group[];
+  servers: ServerConfig[];
+  tunnels: TunnelRule[];
+}
+
+export interface ConfigFileSummary {
+  encrypted: boolean;
+  groups?: number;
+  servers?: number;
+  tunnels?: number;
+}
+
+export interface ConfigImportFileInfo {
+  path: string;
+  name: string;
+}
+
+export interface ConfigImportResult {
+  groups: number;
+  servers: number;
+  tunnels: number;
+}

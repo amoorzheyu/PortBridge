@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { toast } from 'sonner';
-import type { AppLog, Group, ServerConfig, TunnelRule, TunnelRuntimeState } from '@shared/types';
+import type { AppLog, ConfigFileSummary, ConfigImportFileInfo, ConfigImportResult, Group, ServerConfig, TunnelRule, TunnelRuntimeState } from '@shared/types';
 import type { CreateGroupInput, CreateServerInput, CreateTunnelInput, UpdateGroupInput, UpdateServerInput, UpdateTunnelInput } from '@shared/schemas';
 import { electronApi } from '@/api/electronApi';
 
@@ -32,6 +32,11 @@ interface AppStore {
   startServerTunnels: (serverId: string) => Promise<void>;
   stopServerTunnels: (serverId: string) => Promise<void>;
   clearLogs: () => Promise<void>;
+  exportConfig: (password?: string) => Promise<string | null>;
+  selectImportFile: () => Promise<ConfigImportFileInfo | null>;
+  inspectImportFile: (path: string) => Promise<ConfigFileSummary>;
+  previewImport: (path: string, password?: string) => Promise<ConfigFileSummary>;
+  importConfig: (path: string, password?: string) => Promise<ConfigImportResult>;
   applyState: (state: TunnelRuntimeState) => void;
   appendLog: (log: AppLog) => void;
   resetLogs: () => void;
@@ -167,6 +172,37 @@ export const useAppStore = create<AppStore>((set, get) => ({
     await electronApi.logs.clear();
     set({ logs: [] });
   }),
+
+  exportConfig: async (password) => {
+    try {
+      const path = await electronApi.config.export(password);
+      if (path) toast.success('配置已导出');
+      return path;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '导出失败');
+      return null;
+    }
+  },
+
+  selectImportFile: async () => {
+    try {
+      return await electronApi.config.selectImportFile();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '读取配置文件失败');
+      return null;
+    }
+  },
+
+  inspectImportFile: async (path) => electronApi.config.inspectImportFile(path),
+
+  previewImport: async (path, password) => electronApi.config.previewImport(path, password),
+
+  importConfig: async (path, password) => {
+    const result = await electronApi.config.import(path, password);
+    await get().loadAll();
+    toast.success('配置已导入');
+    return result;
+  },
 
   applyState: (state) => set((current) => ({ states: { ...current.states, [state.tunnelId]: state } })),
   appendLog: (log) => set((current) => ({ logs: [...current.logs, log].slice(-500) })),

@@ -69,11 +69,18 @@
   "build": {
     "appId": "com.portbridge.app",
     "productName": "PortBridge",
+    "icon": "build/icon",
     "directories": {
       "output": "release"
     },
     "files": [
       "out/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "build/icon.png",
+        "to": "icon.png"
+      }
     ],
     "mac": {
       "target": [

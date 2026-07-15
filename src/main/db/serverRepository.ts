@@ -58,6 +58,13 @@ export class ServerRepository {
       .map((row) => publicServer(mapServer(row as ServerRow)));
   }
 
+  listWithSecrets(): ServerConfig[] {
+    return getDatabase()
+      .prepare('SELECT * FROM servers ORDER BY created_at ASC')
+      .all()
+      .map((row) => mapServer(row as ServerRow));
+  }
+
   listByGroup(groupId: string): ServerConfig[] {
     return getDatabase()
       .prepare('SELECT * FROM servers WHERE group_id = ? ORDER BY created_at ASC')

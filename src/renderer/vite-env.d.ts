@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import type { AppLog, Group, ServerConfig, TunnelRule, TunnelRuntimeState } from '../../shared/types';
+import type { AppLog, ConfigFileSummary, ConfigImportFileInfo, ConfigImportResult, Group, ServerConfig, TunnelRule, TunnelRuntimeState } from '../../shared/types';
 import type {
   CreateGroupInput,
   CreateServerInput,
@@ -47,6 +47,13 @@ declare global {
       logs: {
         list: () => Promise<AppLog[]>;
         clear: () => Promise<boolean>;
+      };
+      config: {
+        export: (password?: string) => Promise<string | null>;
+        selectImportFile: () => Promise<ConfigImportFileInfo | null>;
+        inspectImportFile: (path: string) => Promise<ConfigFileSummary>;
+        previewImport: (path: string, password?: string) => Promise<ConfigFileSummary>;
+        import: (path: string, password?: string) => Promise<ConfigImportResult>;
       };
       files: {
         selectPrivateKey: () => Promise<{ path: string; content: string } | null>;

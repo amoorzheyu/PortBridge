@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Folder, MoreHorizontal, Plus } from 'lucide-react';
+import { Download, Folder, MoreHorizontal, Plus, Upload } from 'lucide-react';
 import type { Group } from '@shared/types';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -9,6 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { GroupForm } from '@/components/forms/GroupForm';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { ConfigTransferDialog } from './ConfigTransferDialog';
 import { useAppStore } from '@/store/appStore';
 import { cn } from '@/lib/utils';
 
@@ -17,6 +18,7 @@ export function GroupSidebar() {
   const [editingGroup, setEditingGroup] = useState<Group | undefined>();
   const [deleteTarget, setDeleteTarget] = useState<Group | undefined>();
   const [open, setOpen] = useState(false);
+  const [configDialog, setConfigDialog] = useState<'import' | 'export' | undefined>();
   const counts = useMemo(() => {
     return groups.reduce<Record<string, number>>((acc, group) => {
       acc[group.id] = servers.filter((server) => server.groupId === group.id).length;
@@ -38,9 +40,28 @@ export function GroupSidebar() {
     <aside className="flex min-h-0 flex-col border-r bg-card/40">
       <div className="flex h-12 items-center justify-between px-3">
         <div className="text-sm font-semibold">PortBridge</div>
-        <Button size="icon" variant="ghost" onClick={openCreate} aria-label="新增分组">
-          <Plus className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="icon" variant="ghost" aria-label="配置操作">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setConfigDialog('import')}>
+                <Upload className="mr-2 h-4 w-4" />
+                导入配置
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setConfigDialog('export')}>
+                <Download className="mr-2 h-4 w-4" />
+                导出配置
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button size="icon" variant="ghost" onClick={openCreate} aria-label="新增分组">
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
       <Separator />
       <ScrollArea className="min-h-0 flex-1">
@@ -120,6 +141,16 @@ export function GroupSidebar() {
           setDeleteTarget(undefined);
         }}
       />
+
+      {configDialog ? (
+        <ConfigTransferDialog
+          mode={configDialog}
+          open={Boolean(configDialog)}
+          onOpenChange={(value) => {
+            if (!value) setConfigDialog(undefined);
+          }}
+        />
+      ) : null}
     </aside>
   );
 }

@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
-import type { AppLog, Group, ServerConfig, TunnelRule, TunnelRuntimeState } from '../shared/types';
+import type { AppLog, ConfigFileSummary, ConfigImportFileInfo, ConfigImportResult, Group, ServerConfig, TunnelRule, TunnelRuntimeState } from '../shared/types';
 import type {
   CreateGroupInput,
   CreateServerInput,
@@ -52,6 +52,13 @@ const api = {
   logs: {
     list: () => invoke<AppLog[]>('logs:list'),
     clear: () => invoke<boolean>('logs:clear')
+  },
+  config: {
+    export: (password?: string) => invoke<string | null>('config:export', { password }),
+    selectImportFile: () => invoke<ConfigImportFileInfo | null>('config:selectImportFile'),
+    inspectImportFile: (path: string) => invoke<ConfigFileSummary>('config:inspectImportFile', { path }),
+    previewImport: (path: string, password?: string) => invoke<ConfigFileSummary>('config:previewImport', { path, password }),
+    import: (path: string, password?: string) => invoke<ConfigImportResult>('config:import', { path, password })
   },
   files: {
     selectPrivateKey: () => invoke<{ path: string; content: string } | null>('files:selectPrivateKey')

@@ -5,6 +5,16 @@ import { createAppServices, registerIpcHandlers } from './ipc';
 let mainWindow: BrowserWindow | null = null;
 const services = createAppServices();
 
+function getWindowIconPath(): string {
+  return app.isPackaged ? join(process.resourcesPath, 'icon.png') : join(process.cwd(), 'build/icon.png');
+}
+
+function setAppIcon(): void {
+  if (process.platform === 'darwin') {
+    app.dock.setIcon(getWindowIconPath());
+  }
+}
+
 function createWindow(): void {
   mainWindow = new BrowserWindow({
     width: 1280,
@@ -12,6 +22,7 @@ function createWindow(): void {
     minWidth: 1060,
     minHeight: 680,
     title: '',
+    icon: getWindowIconPath(),
     backgroundColor: '#09090b',
     webPreferences: {
       preload: join(__dirname, '../preload/index.mjs'),
@@ -34,6 +45,7 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
+  setAppIcon();
   registerIpcHandlers(services);
   createWindow();
   void services.tunnelManager.startAutoStartTunnels().catch((error) => {

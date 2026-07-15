@@ -20,14 +20,14 @@ interface ConfirmDialogProps {
 export function ConfirmDialog({ open, title, description, onOpenChange, onConfirm }: ConfirmDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
+      <AlertDialogContent className="max-w-[420px] p-5" onOpenAutoFocus={(event) => event.preventDefault()}>
+        <AlertDialogHeader className="space-y-3">
+          <AlertDialogTitle className="text-xl">{title}</AlertDialogTitle>
+          <AlertDialogDescription className="leading-6">{description}</AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>取消</AlertDialogCancel>
-          <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={onConfirm}>
+        <AlertDialogFooter className="mt-6 gap-3">
+          <AlertDialogCancel className="h-9 min-w-20 focus-visible:ring-0">取消</AlertDialogCancel>
+          <AlertDialogAction className="h-9 min-w-20 bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-0" onClick={onConfirm}>
             删除
           </AlertDialogAction>
         </AlertDialogFooter>

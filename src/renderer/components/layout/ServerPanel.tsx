@@ -53,10 +53,10 @@ export function ServerPanel() {
         </Button>
       </div>
       <Separator />
-      <ScrollArea className="min-h-0 flex-1">
-        {filteredServers.length === 0 ? (
-          <EmptyState icon={Server} title={store.groups.length === 0 ? '先创建分组' : '暂无服务器'} />
-        ) : (
+      {filteredServers.length === 0 ? (
+        <EmptyState icon={Server} title={store.groups.length === 0 ? '先创建分组' : '暂无服务器'} className="min-h-0 flex-1" />
+      ) : (
+        <ScrollArea className="min-h-0 flex-1">
           <div className="space-y-2 p-2">
             {filteredServers.map((server) => {
               const serverTunnels = store.tunnels.filter((tunnel) => tunnel.serverId === server.id);
@@ -122,8 +122,8 @@ export function ServerPanel() {
               );
             })}
           </div>
-        )}
-      </ScrollArea>
+        </ScrollArea>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-[520px]">

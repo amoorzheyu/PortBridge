@@ -43,7 +43,7 @@ export function GroupSidebar() {
         <div className="flex items-center gap-1">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="icon" variant="ghost" aria-label="配置操作">
+              <Button size="icon" variant="ghost" className="focus-visible:ring-0" aria-label="配置操作">
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -58,14 +58,14 @@ export function GroupSidebar() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button size="icon" variant="ghost" onClick={openCreate} aria-label="新增分组">
+          <Button size="icon" variant="ghost" className="focus-visible:ring-0" onClick={openCreate} aria-label="新增分组">
             <Plus className="h-4 w-4" />
           </Button>
         </div>
       </div>
       <Separator />
       <ScrollArea className="min-h-0 flex-1">
-        <div className="space-y-1 p-2">
+        <div className="space-y-1 px-2 pb-5 pt-2">
           <button
             className={cn('flex h-9 w-full items-center gap-2 rounded-md px-2 text-left text-sm hover:bg-accent', selectedGroupId === 'all' && 'bg-accent')}
             onClick={() => selectGroup('all')}
@@ -88,7 +88,7 @@ export function GroupSidebar() {
                       </button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button size="icon" variant="ghost" className="mr-1 h-7 w-7 opacity-0 group-hover:opacity-100" aria-label="分组操作">
+                          <Button size="icon" variant="ghost" className="mr-1 h-7 w-7 opacity-0 focus-visible:ring-0 group-hover:opacity-100" aria-label="分组操作">
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>

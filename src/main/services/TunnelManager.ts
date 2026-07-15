@@ -44,20 +44,24 @@ function createLocalForward(
 ): Promise<net.Server> {
   return new Promise((resolve, reject) => {
     const server = net.createServer((localSocket) => {
-      ssh.forwardOut(
-        localSocket.remoteAddress || '127.0.0.1',
-        localSocket.remotePort || 0,
-        remoteHost,
-        remotePort,
-        (err, stream) => {
-          if (err) {
-            localSocket.destroy();
-            return;
+      try {
+        ssh.forwardOut(
+          localSocket.remoteAddress || '127.0.0.1',
+          localSocket.remotePort || 0,
+          remoteHost,
+          remotePort,
+          (err, stream) => {
+            if (err) {
+              localSocket.destroy();
+              return;
+            }
+            localSocket.pipe(stream);
+            stream.pipe(localSocket);
           }
-          localSocket.pipe(stream);
-          stream.pipe(localSocket);
-        }
-      );
+        );
+      } catch {
+        localSocket.destroy();
+      }
     });
 
     server.once('error', reject);
@@ -269,12 +273,14 @@ export class TunnelManager {
     this.emitState(runtime);
     this.logService.warn(`SSH 连接断开，准备 ${Math.round(delay / 1000)} 秒后重连`);
 
+    const localServer = runtime.localServer;
+    runtime.localServer = undefined;
+    void closeServer(localServer);
+    runtime.sshClient?.end();
+    runtime.sshClient = undefined;
+
     runtime.reconnectTimer = setTimeout(async () => {
       runtime.reconnectTimer = undefined;
-      await closeServer(runtime.localServer);
-      runtime.localServer = undefined;
-      runtime.sshClient?.end();
-      runtime.sshClient = undefined;
       try {
         await this.startTunnel(runtime.tunnelId);
       } catch {

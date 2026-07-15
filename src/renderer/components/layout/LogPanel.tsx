@@ -23,14 +23,22 @@ export function LogPanel() {
   const [collapsed, setCollapsed] = useState(false);
   const [level, setLevel] = useState<'all' | 'info' | 'warn' | 'error'>('all');
   const bottomRef = useRef<HTMLDivElement>(null);
+  const previousLogCountRef = useRef(logs.length);
   const filteredLogs = level === 'all' ? logs : logs.filter((log) => log.level === level);
 
   useEffect(() => {
+    const logCountChanged = previousLogCountRef.current !== logs.length;
+    previousLogCountRef.current = logs.length;
+
+    if (collapsed || !logCountChanged) {
+      return;
+    }
+
     bottomRef.current?.scrollIntoView({ block: 'end' });
   }, [logs.length, collapsed]);
 
   return (
-    <section className={cn('border-t bg-card/50 transition-[height]', collapsed ? 'h-10' : 'h-[220px]')}>
+    <section className={cn('absolute inset-x-0 bottom-0 z-20 overflow-hidden border-t bg-card/95 backdrop-blur transition-[height]', collapsed ? 'h-10' : 'h-[220px]')}>
       <div className="flex h-10 items-center justify-between px-3">
         <div className="flex items-center gap-2 text-sm font-medium">
           <TerminalSquare className="h-4 w-4 text-muted-foreground" />

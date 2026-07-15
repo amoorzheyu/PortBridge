@@ -16,8 +16,8 @@ export function AppLayout() {
 
   return (
     <TooltipProvider>
-      <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
-        <div className="grid min-h-0 flex-1 grid-cols-[220px_320px_minmax(0,1fr)]">
+      <div className="relative h-screen overflow-hidden bg-background text-foreground">
+        <div className="grid h-full min-h-0 grid-cols-[220px_320px_minmax(0,1fr)] pb-10">
           <GroupSidebar />
           <ServerPanel />
           <TunnelPanel />

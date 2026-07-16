@@ -35,6 +35,14 @@ function closeServer(server?: net.Server): Promise<void> {
   });
 }
 
+function closeSshClient(ssh?: Client): void {
+  if (!ssh) return;
+  ssh.on('error', () => {
+    // Keep late ssh2 errors from escaping after the tunnel lifecycle moved on.
+  });
+  ssh.end();
+}
+
 function createLocalForward(
   ssh: Client,
   localHost: string,
@@ -83,11 +91,15 @@ export class TunnelManager {
   }
 
   async startTunnel(tunnelId: string): Promise<void> {
+    await this.startTunnelInternal(tunnelId, false);
+  }
+
+  private async startTunnelInternal(tunnelId: string, fromReconnect: boolean): Promise<void> {
     const tunnel = this.tunnelRepository.get(tunnelId);
     if (!tunnel) throw new Error('映射规则不存在');
 
     const existing = this.getRuntime(tunnelId, tunnel.serverId);
-    if (existing.status === 'running' || existing.status === 'starting') return;
+    if (existing.status === 'running' || existing.status === 'starting' || (existing.status === 'reconnecting' && !fromReconnect)) return;
 
     const server = this.serverRepository.get(tunnel.serverId, true);
     if (!server) throw new Error('服务器不存在');
@@ -127,7 +139,8 @@ export class TunnelManager {
     } catch (error) {
       await closeServer(existing.localServer);
       existing.localServer = undefined;
-      ssh.end();
+      if (existing.sshClient === ssh) existing.sshClient = undefined;
+      closeSshClient(ssh);
       const message = error instanceof Error ? error.message : 'SSH 连接失败';
       existing.status = 'error';
       existing.error = message;
@@ -153,7 +166,7 @@ export class TunnelManager {
 
     await closeServer(runtime.localServer);
     runtime.localServer = undefined;
-    runtime.sshClient?.end();
+    closeSshClient(runtime.sshClient);
     runtime.sshClient = undefined;
     runtime.status = 'stopped';
     runtime.startedAt = undefined;
@@ -247,8 +260,27 @@ export class TunnelManager {
     }
 
     return new Promise((resolve, reject) => {
-      ssh.once('ready', resolve);
-      ssh.once('error', reject);
+      const cleanup = (): void => {
+        ssh.off('ready', onReady);
+        ssh.off('error', onError);
+        ssh.off('close', onClose);
+      };
+      const onReady = (): void => {
+        cleanup();
+        resolve();
+      };
+      const onError = (error: Error): void => {
+        cleanup();
+        reject(error);
+      };
+      const onClose = (): void => {
+        cleanup();
+        reject(new Error('SSH 连接在握手完成前断开'));
+      };
+
+      ssh.once('ready', onReady);
+      ssh.once('error', onError);
+      ssh.once('close', onClose);
       ssh.connect(config);
     });
   }
@@ -277,15 +309,16 @@ export class TunnelManager {
     this.logService.warn(`SSH 连接断开，准备 ${Math.round(delay / 1000)} 秒后重连`);
 
     const localServer = runtime.localServer;
+    const sshClient = runtime.sshClient;
     runtime.localServer = undefined;
-    void closeServer(localServer);
-    runtime.sshClient?.end();
     runtime.sshClient = undefined;
+    void closeServer(localServer);
+    closeSshClient(sshClient);
 
     runtime.reconnectTimer = setTimeout(async () => {
       runtime.reconnectTimer = undefined;
       try {
-        await this.startTunnel(runtime.tunnelId);
+        await this.startTunnelInternal(runtime.tunnelId, true);
       } catch {
         if (!runtime.manuallyStopped) this.scheduleReconnect(runtime);
       }

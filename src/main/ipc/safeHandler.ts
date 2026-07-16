@@ -1,6 +1,16 @@
 import { ipcMain } from 'electron';
-import type { ZodTypeAny } from 'zod';
+import type { z, ZodTypeAny } from 'zod';
 
+export function registerHandler<Schema extends ZodTypeAny, Output>(
+  channel: string,
+  schema: Schema,
+  handler: (input: z.output<Schema>) => Output | Promise<Output>
+): void;
+export function registerHandler<Output>(
+  channel: string,
+  schema: null,
+  handler: (input: unknown) => Output | Promise<Output>
+): void;
 export function registerHandler<Input, Output>(
   channel: string,
   schema: ZodTypeAny | null,

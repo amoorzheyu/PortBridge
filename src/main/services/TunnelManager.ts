@@ -110,6 +110,9 @@ export class TunnelManager {
 
     const ssh = new Client();
     existing.sshClient = ssh;
+    ssh.on('error', (error) => {
+      existing.error = error.message;
+    });
 
     try {
       await this.connectSsh(ssh, server);

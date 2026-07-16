@@ -11,6 +11,9 @@ import { registerHandler } from './safeHandler';
 
 function testSshConnection(input: CreateServerInput): Promise<boolean> {
   const ssh = new Client();
+  ssh.on('error', () => {
+    // 避免一次性握手监听消费后，后续 ssh2 错误逃逸到主进程。
+  });
   const config: ConnectConfig = {
     host: input.host,
     port: input.port,

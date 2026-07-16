@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMemo } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, type Resolver } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import type { TunnelRule } from '@shared/types';
@@ -32,8 +32,8 @@ export function TunnelForm({ serverId, tunnel, onSubmit, onCancel }: TunnelFormP
     remotePort: z.preprocess((value) => value === '' || value == null ? defaultRemotePort : value, portSchema)
   }), [defaultLocalPort, defaultRemotePort]);
 
-  const form = useForm<TunnelFormInput, unknown, CreateTunnelInput>({
-    resolver: zodResolver(tunnelFormSchema),
+  const form = useForm<TunnelFormInput>({
+    resolver: zodResolver(tunnelFormSchema) as Resolver<TunnelFormInput>,
     defaultValues: {
       serverId,
       name: tunnel?.name ?? '',
@@ -61,7 +61,7 @@ export function TunnelForm({ serverId, tunnel, onSubmit, onCancel }: TunnelFormP
     else toast.error(`本地端口 ${parsed.data.host}:${parsed.data.port} 已被占用`);
   };
 
-  const handleSubmit = form.handleSubmit(onSubmit);
+  const handleSubmit = form.handleSubmit((values) => onSubmit(tunnelFormSchema.parse(values)));
 
   return (
     <Form {...form}>

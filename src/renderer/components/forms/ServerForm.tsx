@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronDown, ChevronRight, Upload } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, type Resolver } from 'react-hook-form';
 import { toast } from 'sonner';
 import type { Group, ServerConfig } from '@shared/types';
 import { createServerInputSchema, type CreateServerInput } from '@shared/schemas';
@@ -34,8 +34,8 @@ export function ServerForm({ groups, server, defaultGroupId, onSubmit, onCancel 
     requireSecret: !server
   }), [defaultPort, server]);
 
-  const form = useForm<ServerFormInput, unknown, CreateServerInput>({
-    resolver: zodResolver(serverFormSchema),
+  const form = useForm<ServerFormInput>({
+    resolver: zodResolver(serverFormSchema) as Resolver<ServerFormInput>,
     defaultValues: {
       groupId: server?.groupId ?? defaultGroupId ?? groups[0]?.id ?? '',
       name: server?.name ?? '',
@@ -82,7 +82,7 @@ export function ServerForm({ groups, server, defaultGroupId, onSubmit, onCancel 
 
   return (
     <Form {...form}>
-      <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
+      <form className="space-y-5" onSubmit={form.handleSubmit((values) => onSubmit(serverFormSchema.parse(values)))}>
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
